@@ -23,6 +23,7 @@ where
 
 import Config
 import Environment
+import Tools
 import UTF8
 
 import Control.Monad
@@ -47,7 +48,7 @@ scriptInline :: Env -> Inline -> IO Inline
 scriptInline e c@(Code (blockId, _classes, namevals) contents) =
     case lookup kCmd namevals of
         Just cmd  -> do
-            output <- runScript e cmd contents
+            output <- trim <$> runScript e cmd contents
             let classes' = case lookup kClasses namevals of
                             Just newClasses -> [newClasses]
                             Nothing -> []

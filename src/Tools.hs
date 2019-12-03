@@ -21,6 +21,7 @@
 module Tools
 where
 
+import qualified Data.Char as C
 import System.Directory
 import System.FilePath.Posix
 import Text.Pandoc.JSON
@@ -62,3 +63,8 @@ mergeBlocks bs = Div nullAttr bs
 expandPath :: FilePath -> IO FilePath
 expandPath ('~':'/':path) = (</> path) <$> getHomeDirectory
 expandPath path = return path
+
+trim :: String -> String
+trim = halfTrim . halfTrim
+    where
+        halfTrim = dropWhile C.isSpace . reverse
