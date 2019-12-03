@@ -253,6 +253,8 @@ Diagram             Predefined variable                     Render command
 
 Notes:
 
+- `dot: [GraphViz] support also includes `dot`, `neato`, `twopi`, `circo`, `fdp`, `sfdp`, `patchwork` and `osage`.
+
 - `plantuml`: `{{ABP_PLANTUML}}`{.raw} can be defined as an environment variable.
     Its default value is the directory of the `abp` executable appended with `"plantuml.jar"`.
 

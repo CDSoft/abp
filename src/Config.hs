@@ -34,14 +34,18 @@ kPlantumlJar = "plantuml.jar"
 kDiagramRenderers :: [(String, String)]
 kDiagramRenderers = concatMap mkEngine engines
     where
-        engines = [ ("dot", "svg png pdf", \exe ext -> unwords [exe, "-T"++ext, "-o %o %i"])
-                  , ("plantuml", "svg png pdf", \_exe ext -> unwords ["java -jar {{ABP_PLANTUML}} -pipe -charset UTF-8", "-t"++ext, "< %i", "> %o"])
+        engines = [ (name, "svg png pdf", \exe ext -> unwords [exe, "-T"++ext, "-o %o %i"])
+                  | name <- words "dot neato twopi circo fdp sfdp patchwork osage"
+                  ]
+                  ++
+                  [ ("plantuml", "svg png pdf", \_exe ext -> unwords ["java -jar {{ABP_PLANTUML}} -pipe -charset UTF-8", "-t"++ext, "< %i", "> %o"])
                   , ("asy", "svg png pdf", \exe ext -> unwords [exe, "-f", ext, "-o %o %i"])
                   , ("mmdc", "svg png pdf", \exe _ext -> unwords [exe, "-i %i -o %o"])
                   ]
-                  ++ [ (name, "svg png pdf", \exe ext -> unwords [exe, "-a", "-T"++ext, "-o %o %i"])
-                     | name <- words "actdiag  blockdiag  nwdiag  packetdiag  rackdiag  seqdiag"
-                     ]
+                  ++
+                  [ (name, "svg png pdf", \exe ext -> unwords [exe, "-a", "-T"++ext, "-o %o %i"])
+                  | name <- words "actdiag  blockdiag  nwdiag  packetdiag  rackdiag  seqdiag"
+                  ]
         mkEngine (exe, exts, cmd) =
             let exts'@(defaultExt:_) = words exts
             in (exe, cmd exe defaultExt) : [ (exe++"."++ext, cmd exe ext) | ext <- exts' ]
