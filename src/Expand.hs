@@ -140,7 +140,7 @@ expandInline' _ x = return x
 expandURL :: EnvMVar -> String -> IO String
 expandURL e url = encodeWith allowed <$> expandString' e (decode url)
     where
-        allowed c = (c `elem` ":/") || isAllowed c
+        allowed c = (c `elem` ":/@") || isAllowed c
 
 {- Expand blocks
 
