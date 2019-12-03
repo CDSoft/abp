@@ -17,7 +17,7 @@
 # http://cdsoft.fr/abp
 
 name:                abp
-version:             0.1.0.1
+version:             0.1.1.0
 github:              "CDSoft/abp"
 license:             GPL-3
 author:              "Christophe Delord"
@@ -54,12 +54,14 @@ library:
   - directory
   - extra
   - filepath
+  - pandoc
   - pandoc-csv2table
   - pandoc-types
   - process
   - strict
   - template-haskell
   - temporary
+  - text
   - unix-compat
   - uri-encode
 
@@ -76,6 +78,7 @@ executables:
     - filepath
     - pandoc-types
     - template-haskell
+    - text
 
 tests:
   abp-test:

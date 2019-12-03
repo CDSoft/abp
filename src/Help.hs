@@ -25,12 +25,20 @@ module Help
     , version
     , copyright
     , help
+    , emojis
+    , emojisMarkdown
     )
 where
 
 import Config
 import Package
 import Tools
+
+import Data.List
+import qualified Data.Map as M
+import qualified Data.Text as T
+import Text.Pandoc
+import qualified Text.Pandoc.Emoji as E
 
 name :: String
 name = $(abpName)
@@ -73,6 +81,24 @@ help = unlines [
         "Options:",
         "  -v                   Display the current version",
         "  -h                   Display this help message",
+        "  emojis               Show available Pandoc emojis",
         "",
         "More information here: " ++ upstream
     ]
+
+emojis :: Block
+emojis = table
+    where
+        table = Table [] [AlignLeft, AlignLeft] [0.0, 0.0] header body
+        header = [[Plain [Str "Code"]], [Plain [Str "Emoji"]]]
+        body = [ [[Plain [Code ("",[],[]) (':':code++":")]], [Plain [Str value]]]
+               | (code, value) <- emojiList
+               ]
+        emojiList = sort $ M.toList E.emojis
+
+emojisMarkdown :: IO T.Text
+emojisMarkdown = do
+    let writerOptions = def { writerExtensions = pandocExtensions
+                            }
+    let writer = runIOorExplode . writeMarkdown writerOptions
+    writer (Pandoc nullMeta [emojis])

@@ -23,6 +23,7 @@ module Main where
 import AbstractProcessor
 import Help
 
+import qualified Data.Text.IO as T
 import System.Environment
 import Text.Pandoc.JSON
 
@@ -32,4 +33,5 @@ main = getArgs >>= doArgs
 doArgs :: [String] -> IO ()
 doArgs ("-v":_) = putStrLn Help.copyright
 doArgs ("-h":_) = putStrLn Help.help
+doArgs ("emojis":_) = T.putStrLn =<< Help.emojisMarkdown
 doArgs _ = toJSONFilter abp
