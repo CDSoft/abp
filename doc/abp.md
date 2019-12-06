@@ -73,6 +73,8 @@ Usage
 $ pandoc -F abp ...
 ```
 
+A complete example is given as a Makefile in the doc directory.
+
 Cheat sheet
 ===========
 
@@ -91,7 +93,7 @@ code block, inline code                     `fromline=n`            includes a f
 code block, inline code                     `toline=n`              includes a file up to line number `n`
 code block, inline code                     `cmd="shell command"`   replaces the code block by the result of the shell command
 code block                                  `render="command"`      replaces the code block by a link to the image produced by the command (`%i` is the input file name, its content is the content of the code block, `%o` is the output file name)
-code block                                  `img="image path"`      url of the image produced by `render`
+code block                                  `img="image path"`      URL of the image produced by `render`
 code block                                  `out="image path"`      path of the image produced by `render` (optional, the default value is `img`)
 CSV tables                  `table`                                 see [Pandoc csv2table filter]
 
@@ -115,6 +117,7 @@ The `meta` attribute can also be used to point to an external file.
 Variables can only contain inline elements, not blocks.
 
 The initial environment contains:
+
 - the environment variables
 - the document metadata (title, author, date)
 - the output document format (first argument of `abp` given by `pandoc`)
