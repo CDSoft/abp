@@ -24,6 +24,7 @@ module Tools
     , atoi
     , expandPath
     , trim
+    , cleanAttr
     )
 where
 
@@ -69,3 +70,10 @@ trim :: String -> String
 trim = halfTrim . halfTrim
     where
         halfTrim = dropWhile C.isSpace . reverse
+
+cleanAttr :: [String] -> [String] -> Attr -> Attr
+cleanAttr classesToClean namesToClean (blockId, classes, namevals) =
+    ( blockId
+    , filter (`notElem` classesToClean) classes
+    , filter ((`notElem` namesToClean) . fst) namevals
+    )

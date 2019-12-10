@@ -33,19 +33,17 @@ import Text.Pandoc
 
 includeBlock :: (Pandoc -> IO Pandoc) -> Block -> IO [Block]
 
-includeBlock _abp cb@(CodeBlock (blockId, classes, namevals) _contents) =
+includeBlock _abp cb@(CodeBlock attr@(_blockId, _classes, namevals) _contents) =
     case lookup kInclude namevals of
         Just f  -> do
             newContents <- readFileUTF8 =<< expandPath f
-            let newContents' = case (lookup kFromLine namevals, lookup kToLine namevals) of
+            let newContents' = case (atoi <$> lookup kFromLine namevals, atoi <$> lookup kToLine namevals) of
                     (Nothing, Nothing)      -> newContents
-                    (Just from, Nothing)    -> let from' = atoi from
-                                               in unlines $ drop (from'-1) $ lines newContents
-                    (Nothing, Just to)      -> let to' = atoi to
-                                               in unlines $ take to' $ lines newContents
-                    (Just from, Just to)    -> let (from', to') = (atoi from, atoi to)
-                                               in unlines $ take (to'-from'+1) $ drop (from'-1) $ lines newContents
-            return [CodeBlock (blockId, classes, namevals) newContents']
+                    (Just from, Nothing)    -> unlines $ drop (from-1) $ lines newContents
+                    (Nothing, Just to)      -> unlines $ take to $ lines newContents
+                    (Just from, Just to)    -> unlines $ take (to-from+1) $ drop (from-1) $ lines newContents
+            let attr' = cleanAttr [] [kInclude, kFromLine, kToLine] attr
+            return [CodeBlock attr' newContents']
         Nothing -> return [cb]
 
 includeBlock abp d@(Div (_blockId, _classes, namevals) _contents) =

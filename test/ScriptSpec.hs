@@ -31,16 +31,16 @@ import Test.Hspec
 spec :: Spec
 spec = describe "script execution" $ do
     it "executes inline code" $
-        "`echo -e $((1+1))`{.sh cmd=sh}" ==> "`2`{cmd=sh}"
+        "`echo -e $((1+1))`{.sh cmd=sh}" ==> "`2`"
     it "executes inline code and updates the inline class" $
-        "`echo -e $((1+1))`{classes=new_class cmd=sh}" ==> "`2`{.new_class classes=new_class cmd=sh}"
+        "`echo -e $((1+1))`{classes=new_class cmd=sh}" ==> "`2`{.new_class}"
     it "executes code blocks" $
         [text|
             ```{.sh cmd=sh}
             echo $((21*2))
             ```
         |] ==> [text|
-                    ```{cmd=sh}
+                    ```
                     42
                     ```
                |]
@@ -50,7 +50,7 @@ spec = describe "script execution" $ do
             echo $((21*2))
             ```
         |] ==> [text|
-                    ```{.new_class classes=new_class cmd=sh}
+                    ```{.new_class}
                     42
                     ```
                |]
@@ -67,9 +67,9 @@ spec = describe "script execution" $ do
             **cool**
             ```
         |] ==> [text|
-                    ```{.haskell classes=haskell cmd="pandoc % -t native"}
+                    ```{.haskell}
                     [Para [Strong [Str "cool"]]]
                     ```
                |]
     it "allows '%' on the command line" $
-        "`echo $1`{cmd='sh % %%'}" ==> "`%`{cmd='sh % %%'}"
+        "`echo $1`{cmd='sh % %%'}" ==> "`%`"

@@ -57,7 +57,7 @@ diagramEnv e = do
         setVarIO e name =<< expandString e render
 
 diagramBlock :: Env -> Block -> IO [Block]
-diagramBlock e cb@(CodeBlock _attrs@(blockId, classes, namevals) contents) = do
+diagramBlock e cb@(CodeBlock attr@(_blockId, _classes, namevals) contents) = do
     let maybeRender = lookup kRender namevals
         maybeImg = lookup kImg namevals
         maybeOutputPath = lookup kOut namevals
@@ -90,12 +90,7 @@ diagramBlock e cb@(CodeBlock _attrs@(blockId, classes, namevals) contents) = do
                     writeFileUTF8 path contents
                     renderDiagram e render' contents
                 let title = fromMaybe "" (lookup kTitle namevals)
-                let attrs' = ( blockId
-                             , classes
-                             , [ (name, val) | (name, val) <- namevals
-                                             , name `notElem` [kRender, kImg, kOut, kTarget, kTitle]
-                               ]
-                              )
+                let attrs' = cleanAttr [] [kRender, kImg, kOut, kTarget, kTitle] attr
                 let image = Image attrs' [ Str title ] (img, title)
                 return $ case maybeTarget of
                     Just target -> [Para [ Link nullAttr [ image ] (target, title) ]]
