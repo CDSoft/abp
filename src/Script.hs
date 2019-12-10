@@ -19,6 +19,9 @@
 -}
 
 module Script
+    ( scriptBlock
+    , scriptInline
+    )
 where
 
 import Config
@@ -32,7 +35,7 @@ import System.IO
 import System.IO.Temp
 import Text.Pandoc.JSON
 
-scriptBlock :: Env -> Block -> IO Block
+scriptBlock :: Env -> Block -> IO [Block]
 scriptBlock e cb@(CodeBlock (blockId, _classes, namevals) contents) =
     case lookup kCmd namevals of
         Just cmd  -> do
@@ -40,11 +43,11 @@ scriptBlock e cb@(CodeBlock (blockId, _classes, namevals) contents) =
             let classes' = case lookup kClasses namevals of
                             Just newClasses -> [newClasses]
                             Nothing -> []
-            return $ CodeBlock (blockId, classes', namevals) output
-        Nothing -> return cb
-scriptBlock _ x = return x
+            return [CodeBlock (blockId, classes', namevals) output]
+        Nothing -> return [cb]
+scriptBlock _ x = return [x]
 
-scriptInline :: Env -> Inline -> IO Inline
+scriptInline :: Env -> Inline -> IO [Inline]
 scriptInline e c@(Code (blockId, _classes, namevals) contents) =
     case lookup kCmd namevals of
         Just cmd  -> do
@@ -52,9 +55,9 @@ scriptInline e c@(Code (blockId, _classes, namevals) contents) =
             let classes' = case lookup kClasses namevals of
                             Just newClasses -> [newClasses]
                             Nothing -> []
-            return $ Code (blockId, classes', namevals) output
-        Nothing -> return c
-scriptInline _ x = return x
+            return [Code (blockId, classes', namevals) output]
+        Nothing -> return [c]
+scriptInline _ x = return [x]
 
 runScript :: Env -> String -> String -> IO String
 runScript e cmd contents =

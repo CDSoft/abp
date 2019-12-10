@@ -19,6 +19,12 @@
 -}
 
 module Tools
+    ( inlineToString
+    , ljust
+    , atoi
+    , expandPath
+    , trim
+    )
 where
 
 import qualified Data.Char as C
@@ -54,11 +60,6 @@ atoi :: String -> Int
 atoi s = case reads s of
             [(i, "")] -> i
             _ -> error $ "Integer expected: " ++ s
-
-mergeBlocks :: [Block] -> Block
-mergeBlocks [] = Null
-mergeBlocks [b] = b
-mergeBlocks bs = Div nullAttr bs
 
 expandPath :: FilePath -> IO FilePath
 expandPath ('~':'/':path) = (</> path) <$> getHomeDirectory

@@ -19,6 +19,9 @@
 -}
 
 module Diagram
+    ( diagramEnv
+    , diagramBlock
+    )
 where
 
 import Config
@@ -53,7 +56,7 @@ diagramEnv e = do
     forM_ kDiagramRenderers $ \(name, render) ->
         setVarIO e name =<< expandString e render
 
-diagramBlock :: Env -> Block -> IO Block
+diagramBlock :: Env -> Block -> IO [Block]
 diagramBlock e cb@(CodeBlock _attrs@(blockId, classes, namevals) contents) = do
     let maybeRender = lookup kRender namevals
         maybeImg = lookup kImg namevals
@@ -61,7 +64,7 @@ diagramBlock e cb@(CodeBlock _attrs@(blockId, classes, namevals) contents) = do
         maybeTarget = lookup kTarget namevals
         hashDigest = sha1 contents
     case maybeRender of
-        Nothing -> return cb
+        Nothing -> return [cb]
         Just render ->
             withSystemTempFile "abp" $ \path handle -> do
                 hWriteFileUTF8 handle contents
@@ -95,10 +98,10 @@ diagramBlock e cb@(CodeBlock _attrs@(blockId, classes, namevals) contents) = do
                               )
                 let image = Image attrs' [ Str title ] (img, title)
                 return $ case maybeTarget of
-                    Just target -> Para [ Link nullAttr [ image ] (target, title) ]
-                    Nothing -> Para [ image ]
+                    Just target -> [Para [ Link nullAttr [ image ] (target, title) ]]
+                    Nothing -> [Para [ image ]]
 
-diagramBlock _ x = return x
+diagramBlock _ x = return [x]
 
 sha1 :: String -> String
 sha1 s = show sourceHash

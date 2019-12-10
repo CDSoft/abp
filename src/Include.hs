@@ -19,16 +19,21 @@
 -}
 
 module Include
+    ( includeBlock
+    )
 where
 
 import Config
 import Tools
 import UTF8
 
-import Text.Pandoc.JSON
+import Data.List
+import qualified Data.Text as T
+import Text.Pandoc
 
-includeBlock :: Block -> IO Block
-includeBlock cb@(CodeBlock (blockId, classes, namevals) _contents) =
+includeBlock :: (Pandoc -> IO Pandoc) -> Block -> IO [Block]
+
+includeBlock _abp cb@(CodeBlock (blockId, classes, namevals) _contents) =
     case lookup kInclude namevals of
         Just f  -> do
             newContents <- readFileUTF8 =<< expandPath f
@@ -40,6 +45,41 @@ includeBlock cb@(CodeBlock (blockId, classes, namevals) _contents) =
                                                in unlines $ take to' $ lines newContents
                     (Just from, Just to)    -> let (from', to') = (atoi from, atoi to)
                                                in unlines $ take (to'-from'+1) $ drop (from'-1) $ lines newContents
-            return $ CodeBlock (blockId, classes, namevals) newContents'
-        Nothing -> return cb
-includeBlock x = return x
+            return [CodeBlock (blockId, classes, namevals) newContents']
+        Nothing -> return [cb]
+
+includeBlock abp d@(Div (_blockId, _classes, namevals) _contents) =
+    case lookup kInclude namevals of
+        Just f -> do
+            let shift = maybe 0 atoi $ lookup kShift namevals
+            name <- expandPath f
+            newContents <- readFileUTF8 name
+            let reader = makeReader name
+            Pandoc _ blocks <- do
+                doc <- reader (T.pack newContents)
+                let shifted = shiftTitles shift doc
+                abp shifted
+            return blocks
+        Nothing -> return [d]
+
+includeBlock _ x = return [x]
+
+makeReader :: FilePath -> (T.Text -> IO Pandoc)
+makeReader name = runIOorExplode . reader options
+    where
+        options = def
+            { readerExtensions = pandocExtensions
+            }
+        reader
+            | ".md" `isSuffixOf` name = readMarkdown
+            |  ".rst" `isSuffixOf` name = readRST
+            |  ".latex" `isSuffixOf` name = readLaTeX
+            |  ".html" `isSuffixOf` name = readHtml
+            | otherwise = error $ "Unknown file format: " ++ name
+
+shiftTitles :: Int -> Pandoc -> Pandoc
+shiftTitles shift = bottomUp shiftTitle
+    where
+        shiftTitle :: Block -> Block
+        shiftTitle (Header level attr inlines) = Header (level+shift) attr inlines
+        shiftTitle x = x

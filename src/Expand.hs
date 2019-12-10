@@ -21,6 +21,9 @@
 {-# LANGUAGE TupleSections #-}
 
 module Expand
+    ( expandDoc
+    , expandString
+    )
 where
 
 import Config

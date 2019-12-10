@@ -60,10 +60,11 @@ kVarOpen, kVarClose :: String
 kVarOpen = "{{"
 kVarClose = "}}"
 
-kInclude, kFromLine, kToLine :: String
+kInclude, kFromLine, kToLine, kShift :: String
 kInclude = "include"
 kFromLine = "fromline"
 kToLine = "toline"
+kShift = "shift"
 
 kCmd, kClasses :: String
 kCmd = "cmd"

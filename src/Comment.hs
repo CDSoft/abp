@@ -19,13 +19,15 @@
 -}
 
 module Comment
+    ( commentBlock
+    )
 where
 
 import Config
 
 import Text.Pandoc.JSON
 
-commentBlock :: Block -> IO Block
-commentBlock x@(Div (_blockId, classes, _namevals) _contents) =
-    return $ if kComment `elem` classes then Null else x
-commentBlock x = return x
+commentBlock :: Block -> IO [Block]
+commentBlock (Div (_blockId, classes, _namevals) _contents)
+    | kComment `elem` classes = return []
+commentBlock x = return [x]

@@ -32,21 +32,40 @@ import Include
 import Script
 import UTF8
 
+import Data.Data
 import System.IO
 import Text.Pandoc.Generic
 import Text.Pandoc.JSON
 
 abp :: Maybe Format -> Pandoc -> IO Pandoc
-abp maybeFormat doc = do
+abp maybeFormat document = do
     setUTF8Encoding stdin
     setUTF8Encoding stdout
     e <- newEnv maybeFormat
     diagramEnv e
-    doc' <- expandDoc e doc                     -- variable expansion, must be done before other filters
-    e' <- readEnv e
-    bottomUpM commentBlock doc'
-        >>= bottomUpM includeBlock
-        >>= bottomUpM (scriptInline e')
-        >>= bottomUpM (scriptBlock e')
-        >>= bottomUpM (diagramBlock e')
-        >>= bottomUpM csvBlock
+    let abpFilter doc = do
+            doc' <- expandDoc e doc                     -- variable expansion, must be done before other filters
+            e' <- readEnv e
+            inject doc'
+                >>= pf commentBlock
+                >>= pf (includeBlock abpFilter)
+                >>= pf (scriptInline e')
+                >>= pf (scriptBlock e')
+                >>= pf (diagramBlock e')
+                >>= pf csvBlock
+    abpFilter document
+
+inject :: Pandoc -> IO Pandoc
+inject = return
+
+-- make a Pandoc filter from a Block -> IO [Block] function
+pf :: Data a => (a -> IO [a]) -> (Pandoc -> IO Pandoc)
+pf = bottomUpM . cat
+
+-- turns a filter from Block -> IO [Block] to [Block] -> IO [Block]
+cat :: Monad m => (a -> m [a]) -> [a] -> m [a]
+cat f (x:xs) = do
+    y <- f x
+    ys <- cat f xs
+    return $ y++ys
+cat _ [] = return []

@@ -19,12 +19,12 @@
 -}
 
 module CSV
+    ( csvBlock
+    )
 where
-
-import Tools
 
 import Text.Pandoc.JSON
 import Text.Table.Tablify
 
-csvBlock :: Block -> IO Block
-csvBlock block = mergeBlocks <$> tablifyCsvLinks block
+csvBlock :: Block -> IO [Block]
+csvBlock = tablifyCsvLinks

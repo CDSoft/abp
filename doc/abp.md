@@ -82,13 +82,15 @@ Syntactic item              Class           Attributes              Description
 --------------------------- --------------- ----------------------- ---------------------------------
 any string                                                          `{{var}}` is replaced by the value of `var` if it is defined (variables can be environment variables or YAML definitions)
 div block                   `comment`                               commented block
+div block                                   `include=file`          replaces the div block with the content of `file` (rendered according to its format)
+div block                                   `shift=n`               adds `n` to header levels in an imported div block
 any block                   `raw`                                   strings are not expanded in this block
 code block                  `meta`                                  definitions for the string expansion (YAML subset), defined in the code block
 code block                                  `meta=file`             definitions for the string expansion (YAML subset), defined in `file`
 any block                                   `ifdef=name`            block emitted only if `name` is defined
 any block                                   `ifdef=name value=val`  block emitted only if `name` is defined and its value is `value`
 any block                                   `ifndef=name`           block emitted only if `name` is not defined
-code block, inline code                     `inline=file`           replaces the code block content with the content of `file`
+code block, inline code                     `include=file`          replaces the code block content with the content of `file`
 code block, inline code                     `fromline=n`            includes a file from line number `n`
 code block, inline code                     `toline=n`              includes a file up to line number `n`
 code block, inline code                     `cmd="shell command"`   replaces the code block by the result of the shell command
@@ -169,6 +171,23 @@ This block is emitted only if the variable "name" is defined
 This block is emitted only if the variable "name" is **not** defined
 :::
 ```
+
+Div inclusion
+=============
+
+Fragments of documents can be imported from external files.
+The `include` attribute contains the name of the file to include.
+The content of the file is parsed according to its format (deduced from its name)
+and replaces the div block content.
+
+~~~markdown
+:::{include=file.md}
+This text is optional and will be replaced by the content of file.md.
+:::
+~~~
+
+The included file can be in a different format
+(e.g. a markdown file can include a reStructuredText file).
 
 Block inclusion
 ===============
