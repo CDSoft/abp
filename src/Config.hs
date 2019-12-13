@@ -34,6 +34,9 @@ kAbpPlantuml, kPlantumlJar :: String
 kAbpPlantuml = "PLANTUML"
 kPlantumlJar = "plantuml.jar"
 
+kAbpDitaa, kDitaaJar :: String
+kAbpDitaa = "DITAA"
+kDitaaJar = "ditaa.jar"
 
 kDiagramRenderers :: Maybe Format -> [(String, String)]
 kDiagramRenderers fmt = concatMap mkEngine engines
@@ -49,6 +52,9 @@ kDiagramRenderers fmt = concatMap mkEngine engines
                   ++
                   [ (name, "svg png pdf", \exe ext -> unwords [exe, "-a", "-T"++ext, "-o %o", "%i"])
                   | name <- words "actdiag  blockdiag  nwdiag  packetdiag  rackdiag  seqdiag"
+                  ]
+                  ++
+                  [ ("ditaa", "svg png", \_exe ext -> unwords $ "java -jar {{DITAA}}" : [ "--svg" | ext == "svg" ] ++ ["-o", "-e UTF-8", "%i", "%o"])
                   ]
         mkEngine (exe, exts, cmd) =
             let exts'@(defaultHTML:defaultLaTeX:_) = words exts

@@ -49,6 +49,7 @@ import Text.Pandoc.JSON
 diagramEnv :: EnvMVar -> IO ()
 diagramEnv e = do
     storeCustomPath e kAbpPlantuml kPlantumlJar
+    storeCustomPath e kAbpDitaa kDitaaJar
     e' <- readEnv e
     forM_ (kDiagramRenderers (format e')) $ \(name, render) ->
         setVarIO e name =<< expandString e render

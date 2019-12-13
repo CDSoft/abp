@@ -75,6 +75,7 @@ help = unlines [
         "abp can be configured with environment variables:",
         "  "++ljust 20 kABPQuiet++" disable stderr on script execution",
         "  PLANTUML             plantuml.jar full path",
+        "  DITAA                ditaa.jar full path",
         "",
         "abp can be called on the command line to get additional information:",
         "Usage: " ++ name ++ " option",

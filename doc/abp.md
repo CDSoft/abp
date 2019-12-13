@@ -37,7 +37,7 @@ It provides several interesting features:
 - conditional blocks
 - file inclusion (e.g. for source code examples)
 - script execution (e.g. to include the result of a command)
-- diagrams ([Graphviz], [PlantUML], [Asymptote], [blockdiag], [mermaid]...)
+- diagrams ([Graphviz], [PlantUML], [ditaa], [Asymptote], [blockdiag], [mermaid]...)
 - CSV tables
 
 Open source
@@ -278,6 +278,9 @@ Diagram             Predefined variable                     Render command
                     `{{mmdc.svg}}`{.raw}                    `{{mmdc.svg}}`
                     `{{mmdc.png}}`{.raw}                    `{{mmdc.png}}`
                     `{{mmdc.pdf}}`{.raw}                    `{{mmdc.pdf}}`
+[ditaa]             `{{ditaa}}`{.raw}                       `{{ditaa}}`
+                    `{{ditaa.svg}}`{.raw}                   `{{ditaa.svg}}`
+                    `{{ditaa.png}}`{.raw}                   `{{ditaa.png}}`
 
 Notes:
 
@@ -285,6 +288,9 @@ Notes:
 
 - `plantuml`: `{{PLANTUML}}`{.raw} can be defined as an environment variable.
     Its default value is the directory of the `abp` executable appended with `"plantuml.jar"`.
+
+- `ditaa`: `{{DITAA}}`{.raw} can be defined as an environment variable.
+    Its default value is the directory of the `abp` executable appended with `"ditaa.jar"`.
 
 - `blockdiag`: [Blockdiag] support also includes `actdiag`, `blockdiag`, `nwdiag`, `packetdiag`, `rackdiag` and `seqdiag`.
 
