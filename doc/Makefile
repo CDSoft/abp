@@ -8,6 +8,7 @@ clean:
 
 export ABP_ROOT = ../
 export doc = ./
+export PLANTUML = {{PLANTUML}}
 
 CSS = cdsoft.css
 

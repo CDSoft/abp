@@ -1,6 +1,6 @@
 % Abstract Processor (for Pandoc)
 % Christophe Delord - <https://cdsoft.fr/abp>
-% 30 November 2019
+% 13 December 2019
 
 ```{meta="{{ABP_ROOT}}package.yaml"}
 - archive: {{name}}-{{version}}.tar.gz
@@ -240,11 +240,13 @@ The optional `out` field overloads `img` to change the output directory when ren
 In the `render` command, `%i` is replaced by the name of the input document (generated from the content of the code block)
 and `%o` by the name of the output image file (generated from the `img` field).
 
+The file format (extension) must be in the `render` field, after the `%o` tag (e.g.: `%o.png`), not in the `img` field.
+
 +-----------------------------------------------------------------------------------------------+---------------------------------------------------------------------------------------------------+
 | Source                                                                                        | Result                                                                                            |
 +===============================================================================================+===================================================================================================+
 | ~~~ {.markdown .raw}                                                                          |                                                                                                   |
-| ```{render="{{plantuml.svg}}" img="img/abp_plantuml_test.svg" out="{{doc}}/img"}              | ```{render="java -jar ~/.local/bin/plantuml.jar -pipe -tsvg -charset UTF-8 < %i > %o" img="img/abp_plantuml_test.svg" out="{{doc}}/img" height=96}    |
+| ```{render="{{plantuml}}" img="img/abp_plantuml_test" out="{{doc}}/img"}                      | ```{render="java -jar ~/.local/bin/plantuml.jar -pipe -tsvg -charset UTF-8 < %i > %o.svg" img="img/abp_plantuml_test" out="{{doc}}/img" height=96}    |
 | @startuml                                                                                     | @startuml                                                                                         |
 | Alice -> Bob: hello                                                                           | Alice -> Bob: test                                                                                |
 | @enduml                                                                                       | @enduml                                                                                           |
@@ -272,15 +274,25 @@ Diagram             Predefined variable                     Render command
                     `{{blockdiag.svg}}`{.raw}               `{{blockdiag.svg}}`
                     `{{blockdiag.png}}`{.raw}               `{{blockdiag.png}}`
                     `{{blockdiag.pdf}}`{.raw}               `{{blockdiag.pdf}}`
+[mermaid]           `{{mmdc}}`{.raw}                        `{{mmdc}}`
+                    `{{mmdc.svg}}`{.raw}                    `{{mmdc.svg}}`
+                    `{{mmdc.png}}`{.raw}                    `{{mmdc.png}}`
+                    `{{mmdc.pdf}}`{.raw}                    `{{mmdc.pdf}}`
 
 Notes:
 
 - `dot: [GraphViz] support also includes `dot`, `neato`, `twopi`, `circo`, `fdp`, `sfdp`, `patchwork` and `osage`.
 
-- `plantuml`: `{{ABP_PLANTUML}}`{.raw} can be defined as an environment variable.
+- `plantuml`: `{{PLANTUML}}`{.raw} can be defined as an environment variable.
     Its default value is the directory of the `abp` executable appended with `"plantuml.jar"`.
 
 - `blockdiag`: [Blockdiag] support also includes `actdiag`, `blockdiag`, `nwdiag`, `packetdiag`, `rackdiag` and `seqdiag`.
+
+- renderers without an explicit image format are built differently according to the output document format.
+
+    - For PDF (LaTeX) documents, the default format is PNG
+    - For other documents, the default format is SVG
+    - The file extension is added to the `img` field
 
 E.g.:
 
@@ -288,7 +300,7 @@ E.g.:
 | Source                                                                                        | Result                                                                                            |
 +===============================================================================================+===================================================================================================+
 | ~~~ {.markdown .raw}                                                                          |                                                                                                   |
-| ```{.dot render="{{dot.svg}}" img="img/abp_diagram_example.svg" out="{{doc}}/img" height=128} | ```{.dot render="{{dot.svg}}" img="img/abp_diagram_example.svg" out="{{doc}}/img" height=128 }    |
+| ```{.dot render="{{dot}}" img="img/abp_diagram_example" out="{{doc}}/img" height=128}         | ```{.dot render="{{dot}}" img="img/abp_diagram_example" out="{{doc}}/img" height=128 }            |
 | digraph {                                                                                     | digraph {                                                                                         |
 |     rankdir=LR;                                                                               |     rankdir=LR;                                                                                   |
 |     input -> pandoc -> output                                                                 |     input -> pandoc -> output                                                                     |
@@ -315,7 +327,7 @@ Filters can be combined. E.g.: a diagram can be stored in an external file, incl
 | ~~~ {.markdown .raw}                                                                                      |                                                                                                           |
 | and is rendered as:                                                                                       | and is rendered as:                                                                                       |
 |                                                                                                           |                                                                                                           |
-| ```{render="{{dot.svg}}" img="img/hello.svg" out="{{doc}}/img" height=48 include="{{doc}}/hello.dot"}     | ```{render="{{dot.svg}}" img="img/hello.svg" out="{{doc}}/img" height=48 include="{{doc}}/hello.dot"}     |
+| ```{render="{{dot}}" img="img/hello" out="{{doc}}/img" height=48 include="{{doc}}/hello.dot"}             | ```{render="{{dot}}" img="img/hello" out="{{doc}}/img" height=48 include="{{doc}}/hello.dot"}             |
 | ```                                                                                                       | ```                                                                                                       |
 | ~~~                                                                                                       |                                                                                                           |
 +-----------------------------------------------------------------------------------------------------------+-----------------------------------------------------------------------------------------------------------+

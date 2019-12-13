@@ -23,12 +23,10 @@ module Tools
     , ljust
     , atoi
     , expandPath
-    , trim
     , cleanAttr
     )
 where
 
-import qualified Data.Char as C
 import System.Directory
 import System.FilePath.Posix
 import Text.Pandoc.JSON
@@ -65,11 +63,6 @@ atoi s = case reads s of
 expandPath :: FilePath -> IO FilePath
 expandPath ('~':'/':path) = (</> path) <$> getHomeDirectory
 expandPath path = return path
-
-trim :: String -> String
-trim = halfTrim . halfTrim
-    where
-        halfTrim = dropWhile C.isSpace . reverse
 
 cleanAttr :: [String] -> [String] -> Attr -> Attr
 cleanAttr classesToClean namesToClean (blockId, classes, namevals) =

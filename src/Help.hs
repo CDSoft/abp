@@ -74,7 +74,7 @@ help = unlines [
         "Usage: pandoc --filter=abp",
         "abp can be configured with environment variables:",
         "  "++ljust 20 kABPQuiet++" disable stderr on script execution",
-        "  ABP_PLANTUML         plantuml.jar full path",
+        "  PLANTUML             plantuml.jar full path",
         "",
         "abp can be called on the command line to get additional information:",
         "Usage: " ++ name ++ " option",

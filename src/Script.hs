@@ -30,6 +30,7 @@ import Tools
 import UTF8
 
 import Control.Monad
+import Data.List.Extra
 import System.Exit
 import System.IO
 import System.IO.Temp
