@@ -35,17 +35,12 @@ import System.IO
 import System.IO.Temp
 import Text.Pandoc.JSON
 
--- TODO: remove used attributes or classes
-
 scriptBlock :: Env -> Block -> IO [Block]
 scriptBlock e cb@(CodeBlock attr@(_blockId, _classes, namevals) contents) =
     case lookup kCmd namevals of
         Just cmd  -> do
             output <- runScript e cmd contents
-            let (blockId', _classes', namevals') = cleanAttr [] [kCmd, kClasses] attr
-            let classes' = case lookup kClasses namevals of
-                            Just newClasses -> [newClasses]
-                            Nothing -> []
+            let (blockId', classes', namevals') = cleanAttr [] [kCmd] attr
             return [CodeBlock (blockId', classes', namevals') output]
         Nothing -> return [cb]
 scriptBlock _ x = return [x]
@@ -55,10 +50,7 @@ scriptInline e c@(Code attr@(_blockId, _classes, namevals) contents) =
     case lookup kCmd namevals of
         Just cmd  -> do
             output <- trim <$> runScript e cmd contents
-            let (blockId', _classes', namevals') = cleanAttr [] [kCmd, kClasses] attr
-            let classes' = case lookup kClasses namevals of
-                            Just newClasses -> [newClasses]
-                            Nothing -> []
+            let (blockId', classes', namevals') = cleanAttr [] [kCmd] attr
             return [Code (blockId', classes', namevals') output]
         Nothing -> return [c]
 scriptInline _ x = return [x]

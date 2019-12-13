@@ -31,26 +31,14 @@ import Test.Hspec
 spec :: Spec
 spec = describe "script execution" $ do
     it "executes inline code" $
-        "`echo -e $((1+1))`{.sh cmd=sh}" ==> "`2`"
-    it "executes inline code and updates the inline class" $
-        "`echo -e $((1+1))`{classes=new_class cmd=sh}" ==> "`2`{.new_class}"
+        "`echo -e $((1+1))`{.foo cmd=sh}" ==> "`2`{.foo}"
     it "executes code blocks" $
         [text|
-            ```{.sh cmd=sh}
+            ```{.bar cmd=sh}
             echo $((21*2))
             ```
         |] ==> [text|
-                    ```
-                    42
-                    ```
-               |]
-    it "executes code blocks and updates the block class" $
-        [text|
-            ```{.sh classes=new_class cmd=sh}
-            echo $((21*2))
-            ```
-        |] ==> [text|
-                    ```{.new_class}
+                    ``` bar
                     42
                     ```
                |]
@@ -63,7 +51,7 @@ spec = describe "script execution" $ do
         |] !=> ExitFailure 42
     it "accepts a flexible command line" $
         [text|
-            ```{.markdown classes=haskell cmd="pandoc % -t native"}
+            ```{.haskell cmd="pandoc % -t native"}
             **cool**
             ```
         |] ==> [text|

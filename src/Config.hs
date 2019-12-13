@@ -66,9 +66,8 @@ kFromLine = "fromline"
 kToLine = "toline"
 kShift = "shift"
 
-kCmd, kClasses :: String
+kCmd :: String
 kCmd = "cmd"
-kClasses = "classes"
 
 kScriptArg :: Char
 kScriptArg = '%'
