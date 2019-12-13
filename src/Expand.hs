@@ -35,10 +35,11 @@ import Control.Concurrent.MVar
 import Control.Monad
 import Data.Char (isSpace)
 import Data.List
+import Data.List.Extra
 import qualified Data.Map as M
 import Data.Maybe
 import Network.URI.Encode
-import Text.Pandoc.JSON
+import Text.Pandoc
 import Text.Pandoc.Walk
 
 {- Walk trhoug the whole document
@@ -53,10 +54,10 @@ import Text.Pandoc.Walk
 
 -}
 
-expandDoc :: EnvMVar -> Pandoc -> IO Pandoc
-expandDoc e (Pandoc meta blocks) = do
+expandDoc :: EnvMVar -> (Pandoc -> IO Pandoc) -> Pandoc -> IO Pandoc
+expandDoc e abp (Pandoc meta blocks) = do
     meta' <- expandMeta e meta
-    blocks' <- mapM (walkM (expandBlock e)) blocks
+    blocks' <- mapM (walkM (expandBlock e abp)) blocks
                >>= mapM (walkM (expandInline e))
     return $ Pandoc meta' blocks'
 
@@ -78,7 +79,7 @@ expandMetaValue e = walkM (expandInline e)
 {- Block/Inline filter -}
 genericFilter :: EnvMVar -> Attr -> a -> IO a -> IO a
 genericFilter e attrs disabledItem enabledItem = do
-    disabled <- isDisabled e attrs
+    disabled <- itemIsDisabled e attrs
     if disabled
         then return disabledItem
         else enabledItem
@@ -89,11 +90,11 @@ inlineFilter e attrs = genericFilter e attrs (Str "")
 blockFilter :: EnvMVar -> Attr -> IO Block -> IO Block
 blockFilter e attrs = genericFilter e attrs Null
 
-isDisabled :: EnvMVar -> Attr -> IO Bool
-isDisabled e attrs = not <$> isEnabled e attrs
+itemIsDisabled :: EnvMVar -> Attr -> IO Bool
+itemIsDisabled e attrs = not <$> itemIsEnabled e attrs
 
-isEnabled :: EnvMVar -> Attr -> IO Bool
-isEnabled e (_, _, namevals) = do
+itemIsEnabled :: EnvMVar -> Attr -> IO Bool
+itemIsEnabled e (_, _, namevals) = do
     let maybeDefName = lookup kIfdef namevals
         maybeVal = lookup kValue namevals
         maybeUndefName = lookup kIfndef namevals
@@ -131,7 +132,7 @@ expandInline e x = expandInline' e x
 
 {- expand strings -}
 expandInline' :: EnvMVar -> Inline -> IO Inline
-expandInline' e (Str s) = Str <$> expandString' e s
+expandInline' e (Str s) = expandString e s -- Str <$> expandString' e s
 expandInline' e (Code attrs s) = Code <$> expandAttr e attrs <*> expandString' e s
 expandInline' e (Math mathType s) = Math mathType <$> expandString' e s
 expandInline' e (RawInline fmt s) = RawInline fmt <$> expandString' e s
@@ -154,16 +155,16 @@ expandURL e url = encodeWith allowed <$> expandString' e (decode url)
 -}
 
 {- filter blocks -}
-expandBlock :: EnvMVar -> Block -> IO Block
-expandBlock e x@(CodeBlock attrs _) = rawFilter attrs x $ blockFilter e attrs (expandBlock' e x)
-expandBlock e x@(Header _ attrs _) = rawFilter attrs x $ blockFilter e attrs (expandBlock' e x)
-expandBlock e x@(Div attrs _) = rawFilter attrs x $ blockFilter e attrs (expandBlock' e x)
-expandBlock e x = expandBlock' e x
+expandBlock :: EnvMVar -> (Pandoc -> IO Pandoc) -> Block -> IO Block
+expandBlock e abp x@(CodeBlock attrs _) = rawFilter attrs x $ blockFilter e attrs (expandBlock' e abp x)
+expandBlock e abp x@(Header _ attrs _) = rawFilter attrs x $ blockFilter e attrs (expandBlock' e abp x)
+expandBlock e abp x@(Div attrs _) = rawFilter attrs x $ blockFilter e attrs (expandBlock' e abp x)
+expandBlock e abp x = expandBlock' e abp x
 
-expandBlock' :: EnvMVar -> Block -> IO Block
+expandBlock' :: EnvMVar -> (Pandoc -> IO Pandoc) -> Block -> IO Block
 
 {- load definitions -}
-expandBlock' e (CodeBlock (_blockId, classes, namevals) contents)
+expandBlock' e abp (CodeBlock (_blockId, classes, namevals) contents)
     | isJust externalMetaFile = expandMetaFromFile externalMetaFile
     | isMetaClass = expandMetaFromString contents
     where
@@ -182,15 +183,14 @@ expandBlock' e (CodeBlock (_blockId, classes, namevals) contents)
         parseDef s = do
             let s1 = dropWhile (\c -> isSpace c || c == '-') s
                 (var, s2) = break (\c -> isSpace c || c == ':') s1
-                s3 = dropWhile isSpace s2
-                val = case s3 of
-                        ':':s4 -> reverse $ dropWhile isSpace $ reverse $ dropWhile isSpace s4
-                        _ -> ""
-            val' <- expandString e val
-            setVarIO e var val'
+                s4 = trim $ case dropWhile isSpace s2 of
+                        ':':s3 -> s3
+                        s3 -> s3
+            maybeInline <- stringToInline abp s4
+            forM_ maybeInline (setVarIO e var)
 
 {- expand strings -}
-expandBlock' e x = expandBlock'' e x
+expandBlock' e _ x = expandBlock'' e x
 
 expandBlock'' :: EnvMVar -> Block -> IO Block
 expandBlock'' e (CodeBlock attrs s) = CodeBlock <$> expandAttr e attrs <*> expandString' e s
@@ -237,7 +237,25 @@ expandString' :: EnvMVar -> String -> IO String
 expandString' e s = inlineToString <$> expandString e s
 
 metaValueToInline :: MetaValue -> Maybe Inline
+metaValueToInline (MetaList xs) = Just $ Span nullAttr $ intersperse (Span nullAttr [Str ",", Space]) $ mapMaybe metaValueToInline xs
+metaValueToInline (MetaBool True) = Just $ Str "true"
+metaValueToInline (MetaBool False) = Just $ Str "false"
 metaValueToInline (MetaString s) = Just $ Str s
 metaValueToInline (MetaInlines xs) = Just $ Span nullAttr xs
-metaValueToInline (MetaList xs) = Just $ Span nullAttr $ intersperse (Span nullAttr [Str ",", Space]) $ mapMaybe metaValueToInline xs
 metaValueToInline _ = Nothing
+
+stringToInline :: (Pandoc -> IO Pandoc) -> String -> IO (Maybe Inline)
+stringToInline abp s = do
+    Pandoc _ blocks <- parseDoc Nothing s >>= abp
+    return $ blockToInline blocks
+
+blockToInline :: [Block] -> Maybe Inline
+blockToInline [] = Just $ Span nullAttr []
+blockToInline [Plain [x]] = Just x
+blockToInline [Plain xs] = Just $ Span nullAttr xs
+blockToInline [Para [x]] = Just x
+blockToInline [Para xs] = Just $ Span nullAttr xs
+blockToInline [LineBlock [[x]]] = Just x
+blockToInline [LineBlock [xs]] = Just $ Span nullAttr xs
+blockToInline [Div _ blocks] = blockToInline blocks
+blockToInline _ = Nothing

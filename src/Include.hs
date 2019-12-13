@@ -27,8 +27,6 @@ import Config
 import Tools
 import UTF8
 
-import Data.List
-import qualified Data.Text as T
 import Text.Pandoc
 
 includeBlock :: (Pandoc -> IO Pandoc) -> Block -> IO [Block]
@@ -52,28 +50,14 @@ includeBlock abp d@(Div (_blockId, _classes, namevals) _contents) =
             let shift = maybe 0 atoi $ lookup kShift namevals
             name <- expandPath f
             newContents <- readFileUTF8 name
-            let reader = makeReader name
             Pandoc _ blocks <- do
-                doc <- reader (T.pack newContents)
+                doc <- parseDoc (Just name) newContents
                 let shifted = shiftTitles shift doc
                 abp shifted
             return blocks
         Nothing -> return [d]
 
 includeBlock _ x = return [x]
-
-makeReader :: FilePath -> (T.Text -> IO Pandoc)
-makeReader name = runIOorExplode . reader options
-    where
-        options = def
-            { readerExtensions = pandocExtensions
-            }
-        reader
-            | ".md" `isSuffixOf` name = readMarkdown
-            |  ".rst" `isSuffixOf` name = readRST
-            |  ".latex" `isSuffixOf` name = readLaTeX
-            |  ".html" `isSuffixOf` name = readHtml
-            | otherwise = error $ "Unknown file format: " ++ name
 
 shiftTitles :: Int -> Pandoc -> Pandoc
 shiftTitles shift = bottomUp shiftTitle

@@ -24,12 +24,15 @@ module Tools
     , atoi
     , expandPath
     , cleanAttr
+    , parseDoc
     )
 where
 
+import Data.List
+import qualified Data.Text as T
 import System.Directory
 import System.FilePath.Posix
-import Text.Pandoc.JSON
+import Text.Pandoc
 
 inlineToString :: Inline -> String
 inlineToString (Str s) = s
@@ -70,3 +73,17 @@ cleanAttr classesToClean namesToClean (blockId, classes, namevals) =
     , filter (`notElem` classesToClean) classes
     , filter ((`notElem` namesToClean) . fst) namevals
     )
+
+parseDoc :: Maybe FilePath -> String -> IO Pandoc
+parseDoc maybeName = runIOorExplode . reader options . T.pack
+    where
+        options = def
+            { readerExtensions = pandocExtensions
+            }
+        reader = case maybeName of
+            Just name | ".md" `isSuffixOf` name -> readMarkdown
+            Just name |  ".rst" `isSuffixOf` name -> readRST
+            Just name |  ".latex" `isSuffixOf` name -> readLaTeX
+            Just name |  ".html" `isSuffixOf` name -> readHtml
+            Just name -> error $ "Unknown file format: " ++ name
+            Nothing -> readMarkdown

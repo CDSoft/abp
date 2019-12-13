@@ -44,7 +44,7 @@ abp maybeFormat document = do
     e <- newEnv maybeFormat
     diagramEnv e
     let abpFilter doc = do
-            doc' <- expandDoc e doc                     -- variable expansion, must be done before other filters
+            doc' <- expandDoc e abpFilter doc   -- variable expansion, must be done before other filters
             e' <- readEnv e
             inject doc'
                 >>= pf commentBlock
@@ -64,8 +64,4 @@ pf = bottomUpM . cat
 
 -- turns a filter from Block -> IO [Block] to [Block] -> IO [Block]
 cat :: Monad m => (a -> m [a]) -> [a] -> m [a]
-cat f (x:xs) = do
-    y <- f x
-    ys <- cat f xs
-    return $ y++ys
-cat _ [] = return []
+cat f xs = concat <$> mapM f xs

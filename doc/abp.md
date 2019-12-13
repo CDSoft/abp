@@ -133,7 +133,7 @@ E.g.:
 
 ~~~markdown
 ```meta
-- foo: bar
+- foo: bar (note: this is parsed as **Markdown**)
 ```
 
 foo is {{foo}}.

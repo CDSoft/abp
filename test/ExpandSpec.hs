@@ -112,7 +112,7 @@ spec = describe "variable expansion" $ do
         |] ==> "foo = !buzz!"
 
     context "conditional blocks" $ do
-        it "takes definitions from the active blocks)" $ do
+        it "takes definitions from the active blocks" $ do
             [text|
                 ```meta
                 - lang: en
