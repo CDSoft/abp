@@ -164,17 +164,18 @@ expandBlock e abp x = expandBlock' e abp x
 expandBlock' :: EnvMVar -> (Pandoc -> IO Pandoc) -> Block -> IO Block
 
 {- load definitions -}
-expandBlock' e abp (CodeBlock (_blockId, classes, namevals) contents)
-    | isJust externalMetaFile = expandMetaFromFile externalMetaFile
-    | isMetaClass = expandMetaFromString contents
+expandBlock' e abp cb@(CodeBlock (_blockId, classes, namevals) contents) =
+    case (maybeExternalMetaFile, isMetaClass) of
+        (Just externalMetaFile, _) -> expandMetaFromFile externalMetaFile
+        (Nothing, True) -> expandMetaFromString contents
+        (Nothing, False) -> expandBlock'' e cb -- not a definition block => expand strings
     where
         isMetaClass = kMeta `elem` classes
-        externalMetaFile = lookup kMeta namevals
+        maybeExternalMetaFile = lookup kMeta namevals
 
-        expandMetaFromFile (Just name) = do
+        expandMetaFromFile name = do
             defs <- expandString' e name >>= readFileUTF8
             expandMetaFromString (unlines [defs, contents])
-        expandMetaFromFile Nothing = expandMetaFromString contents
 
         expandMetaFromString s = do
             forM_ (lines s) parseDef

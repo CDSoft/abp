@@ -17,7 +17,7 @@
 # http://cdsoft.fr/abp
 
 name:                abp
-version:             0.1.7.1
+version:             0.1.7.2
 github:              "CDSoft/abp"
 license:             GPL-3
 author:              "Christophe Delord"
@@ -62,7 +62,6 @@ library:
   - template-haskell
   - temporary
   - text
-  - unix-compat
   - uri-encode
 
 executables:
@@ -75,9 +74,7 @@ executables:
     - -fwarn-unused-do-bind
     dependencies:
     - abp
-    - filepath
     - pandoc-types
-    - template-haskell
     - text
 
 tests:
@@ -90,7 +87,9 @@ tests:
     - -fwarn-unused-do-bind
     dependencies:
     - abp
-    - HUnit
+    - directory
+    - exceptions
+    - filepath
     - hspec
     - neat-interpolation
     - pandoc

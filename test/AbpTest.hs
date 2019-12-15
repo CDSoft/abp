@@ -51,6 +51,13 @@ writer = runIOorExplode . writeMarkdown writerOptions
     expectedOutputAst <- reader expectedOutput
     outputAst `shouldBe` expectedOutputAst
 
+(==>*) :: (HasCallStack) => Text -> Text -> IO ()
+(==>*) input expectedOutput = do
+    output <- reader input >>= abp (Just (Format "html")) >>= writer
+    outputAst <- reader output
+    expectedOutputAst <- reader expectedOutput
+    outputAst `shouldBe` expectedOutputAst
+
 (!=>) :: (HasCallStack) => Text -> ExitCode -> IO ()
 (!=>) input exitCode = do
     inputAst <- reader input

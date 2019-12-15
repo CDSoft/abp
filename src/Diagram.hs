@@ -75,9 +75,7 @@ diagramBlock e cb@(CodeBlock attr@(_blockId, _classes, namevals) contents) = do
         Nothing -> return [cb]
         Just render -> do
             let ext = getExt render
-            let img = case maybeImg of
-                        Just img' -> makeImg hashDigest img'
-                        Nothing -> error $ kImg ++ " field missing in a diagram block"
+            let img = fromMaybe (error $ kImg ++ " field missing in a diagram block") maybeImg
             out <- expandPath $ case maybeOutputPath of
                         Just out' -> out' </> takeFileName img
                         Nothing -> img
@@ -123,9 +121,6 @@ getExt [] = ""
 
 makeCmd :: String -> String -> String -> String
 makeCmd src img = replace kDiagArgIn src . replace kDiagArgOut img
-
-makeImg :: String -> String -> String
-makeImg = replace kDiagArgOut
 
 renderDiagram :: Env -> String -> String -> IO ()
 renderDiagram e cmd contents = do
