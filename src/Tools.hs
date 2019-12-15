@@ -19,7 +19,7 @@
 -}
 
 module Tools
-    ( inlineToString
+    ( inlineToPlainText
     , ljust
     , atoi
     , expandPath
@@ -29,39 +29,23 @@ module Tools
 where
 
 import Data.List
+import Data.List.Extra
 import qualified Data.Text as T
 import System.Directory
 import System.FilePath.Posix
 import Text.Pandoc
 
-inlineToString :: Inline -> String
-inlineToString (Str s) = s
-inlineToString (Emph xs) = concatMap inlineToString xs
-inlineToString (Strong xs) = concatMap inlineToString xs
-inlineToString (Strikeout xs) = concatMap inlineToString xs
-inlineToString (Superscript xs) = concatMap inlineToString xs
-inlineToString (Subscript xs) = concatMap inlineToString xs
-inlineToString (SmallCaps xs) = concatMap inlineToString xs
-inlineToString (Quoted _ xs) = concatMap inlineToString xs
-inlineToString (Cite _ xs) = concatMap inlineToString xs
-inlineToString (Code _ x) = x
-inlineToString Space = " "
-inlineToString SoftBreak = " "
-inlineToString LineBreak = "\n"
-inlineToString (Math _ x) = x
-inlineToString (RawInline _ x) = x
-inlineToString (Link _ _ (_, x)) = x
-inlineToString (Image _ _ (_, x)) = x
-inlineToString (Note _) = ""
-inlineToString (Span _ xs) = concatMap inlineToString xs
+inlineToPlainText :: Inline -> IO String
+inlineToPlainText inline = trim . T.unpack <$> runIOorExplode (writer doc)
+    where
+        doc = Pandoc nullMeta [Plain [inline]]
+        writer = writePlain def
 
 ljust :: Int -> String -> String
 ljust w s = s ++ replicate (w - length s) ' '
 
 atoi :: String -> Int
-atoi s = case reads s of
-            [(i, "")] -> i
-            _ -> error $ "Integer expected: " ++ s
+atoi = read
 
 expandPath :: FilePath -> IO FilePath
 expandPath ('~':'/':path) = (</> path) <$> getHomeDirectory

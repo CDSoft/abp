@@ -52,16 +52,17 @@ diagramEnv e = do
     storeCustomPath e kAbpDitaa kDitaaJar
     e' <- readEnv e
     forM_ (kDiagramRenderers (format e')) $ \(name, render) ->
-        setVarIO e name =<< expandString e render
+        setVar e name =<< expandString e render
 
 storeCustomPath :: EnvMVar -> String -> FilePath -> IO ()
 storeCustomPath e envVarName defaultBaseName = do
-    e' <- readEnv e
-    let value = case (getVar' e' envVarName, getVar' e' kAbpPath) of
+    name <- getVarStr e envVarName
+    path <- getVarStr e kAbpPath
+    let value = case (name, path) of
             (Just customValue, _) -> customValue
             (Nothing, Just abpPath) -> takeDirectory abpPath </> defaultBaseName
             (Nothing, Nothing) -> defaultBaseName
-    setVarIO e envVarName (Str value)
+    setVar e envVarName (Str value)
 
 diagramBlock :: Env -> Block -> IO [Block]
 diagramBlock e cb@(CodeBlock attr@(_blockId, _classes, namevals) contents) = do
@@ -111,11 +112,12 @@ sha1 s = show sourceHash
         sourceHash = hash (BS.pack s) :: Digest SHA1
 
 getExt :: String -> String
-getExt s | kDiagArgOut `isPrefixOf` s = case dropPrefix kDiagArgOut s of
-                                            '.':s' -> case takeWhile isLetter s' of
-                                                        s''@(_:_) -> '.':s''
-                                                        _ -> ""
-                                            _ -> ""
+getExt s | kDiagArgOut `isPrefixOf` s =
+    case dropPrefix kDiagArgOut s of
+        '.':s' -> case takeWhile isAlphaNum s' of
+                    s''@(_:_) -> '.':s''
+                    _ -> ""
+        _ -> ""
 getExt (_:s) = getExt s
 getExt [] = ""
 

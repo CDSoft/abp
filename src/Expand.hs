@@ -70,7 +70,7 @@ expandMeta e meta = do
 expandMetaDef :: EnvMVar -> (String, MetaValue) -> IO (String, MetaValue)
 expandMetaDef e (var, val) = do
     val' <- expandMetaValue e val
-    forM_ (metaValueToInline val') (setVarIO e var)
+    forM_ (metaValueToInline val') (setVar e var)
     return (var, val')
 
 expandMetaValue :: EnvMVar -> MetaValue -> IO MetaValue
@@ -99,12 +99,12 @@ itemIsEnabled e (_, _, namevals) = do
         maybeVal = lookup kValue namevals
         maybeUndefName = lookup kIfndef namevals
     case (maybeDefName, maybeVal, maybeUndefName) of
-            (Just defName, Nothing, _) -> isJust <$> (getVarIO e =<< expandString' e defName)
+            (Just defName, Nothing, _) -> isJust <$> (getVar e =<< expandString' e defName)
             (Just defName, Just value, _) -> do
                                                 defName' <- expandString' e defName
                                                 value' <- expandString' e value
-                                                (==Just value') <$> getVar'IO e defName'
-            (Nothing, _, Just undefName) -> isNothing <$> (getVarIO e =<< expandString' e undefName)
+                                                (==Just value') <$> getVarStr e defName'
+            (Nothing, _, Just undefName) -> isNothing <$> (getVar e =<< expandString' e undefName)
             _ -> return True
 
 rawFilter :: Attr -> a -> IO a -> IO a
@@ -187,7 +187,7 @@ expandBlock' e abp (CodeBlock (_blockId, classes, namevals) contents)
                         ':':s3 -> s3
                         s3 -> s3
             maybeInline <- stringToInline abp s4
-            forM_ maybeInline (setVarIO e var)
+            forM_ maybeInline (setVar e var)
 
 {- expand strings -}
 expandBlock' e _ x = expandBlock'' e x
@@ -234,7 +234,7 @@ expandString e s = do
         expandVar vs [] revName = expandRegularText vs [] (reverse (kVarOpen++reverse revName))
 
 expandString' :: EnvMVar -> String -> IO String
-expandString' e s = inlineToString <$> expandString e s
+expandString' e s = inlineToPlainText =<< expandString e s
 
 metaValueToInline :: MetaValue -> Maybe Inline
 metaValueToInline (MetaList xs) = Just $ Span nullAttr $ intersperse (Span nullAttr [Str ",", Space]) $ mapMaybe metaValueToInline xs

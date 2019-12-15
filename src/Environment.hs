@@ -23,9 +23,8 @@ module Environment
     , EnvMVar
     , newEnv
     , readEnv
-    , setVarIO
-    , getVar, getVar'
-    , getVarIO, getVar'IO
+    , setVar
+    , getVar, getVarStr
     )
 where
 
@@ -61,24 +60,11 @@ newEnv maybeFormat = do
 readEnv :: EnvMVar -> IO Env
 readEnv = readMVar
 
-setVarIO :: EnvMVar -> String -> Inline -> IO ()
-setVarIO mvar var val = do
-    e <- takeMVar mvar
-    let vars' = (var, val) : vars e
-    putMVar mvar (e { vars = vars' })
+setVar :: EnvMVar -> String -> Inline -> IO ()
+setVar mvar var val = modifyMVar_ mvar (\e -> return e { vars = (var, val) : vars e })
 
-getVar :: Env -> String -> Maybe Inline
-getVar e var = lookup var (vars e)
+getVar :: EnvMVar -> String -> IO (Maybe Inline)
+getVar e var = lookup var . vars <$> readMVar e
 
-getVar' :: Env -> String -> Maybe String
-getVar' e var = inlineToString <$> getVar e var
-
-getVarIO :: EnvMVar -> String -> IO (Maybe Inline)
-getVarIO e var = do
-    e' <- readMVar e
-    return $ getVar e' var
-
-getVar'IO :: EnvMVar -> String -> IO (Maybe String)
-getVar'IO e var = do
-    e' <- readMVar e
-    return $ getVar' e' var
+getVarStr :: EnvMVar -> String -> IO (Maybe String)
+getVarStr e var = mapM inlineToPlainText =<< getVar e var
