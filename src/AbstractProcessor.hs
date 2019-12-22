@@ -25,6 +25,7 @@ where
 
 import CSV
 import Comment
+import Dependencies
 import Diagram
 import Environment
 import Expand
@@ -48,12 +49,14 @@ abp maybeFormat document = do
             e' <- readEnv e
             inject doc'
                 >>= pf commentBlock
-                >>= pf (includeBlock abpFilter)
+                >>= pf (includeBlock e abpFilter)
                 >>= pf (scriptInline e')
                 >>= pf (scriptBlock e')
                 >>= pf (diagramBlock e')
                 >>= pf csvBlock
-    abpFilter document
+    doc <- abpFilter document
+    writeDependencies e
+    return doc
 
 inject :: Pandoc -> IO Pandoc
 inject = return

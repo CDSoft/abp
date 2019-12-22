@@ -24,32 +24,32 @@ module Include
 where
 
 import Config
+import Dependencies
+import Environment
 import Tools
-import UTF8
 
 import Text.Pandoc
 
-includeBlock :: (Pandoc -> IO Pandoc) -> Block -> IO [Block]
+includeBlock :: EnvMVar -> (Pandoc -> IO Pandoc) -> Block -> IO [Block]
 
-includeBlock _abp cb@(CodeBlock attr@(_blockId, _classes, namevals) _contents) =
+includeBlock e _abp cb@(CodeBlock attr@(_blockId, _classes, namevals) _contents) =
     case lookup kInclude namevals of
         Just f  -> do
-            newContents <- readFileUTF8 =<< expandPath f
+            (_, newContents) <- trackFile e f
             let newContents' = case (atoi <$> lookup kFromLine namevals, atoi <$> lookup kToLine namevals) of
                     (Nothing, Nothing)      -> newContents
                     (Just from, Nothing)    -> unlines $ drop (from-1) $ lines newContents
                     (Nothing, Just to)      -> unlines $ take to $ lines newContents
-                    (Just from, Just to)    -> unlines $ take (to-from+1) $ drop (from-1) $ lines newContents
+                    (Just from, Just to)    -> unlines $ drop (from-1) . take to $ lines newContents
             let attr' = cleanAttr [] [kInclude, kFromLine, kToLine] attr
             return [CodeBlock attr' newContents']
         Nothing -> return [cb]
 
-includeBlock abp d@(Div (_blockId, _classes, namevals) _contents) =
+includeBlock e abp d@(Div (_blockId, _classes, namevals) _contents) =
     case lookup kInclude namevals of
         Just f -> do
             let shift = maybe 0 atoi $ lookup kShift namevals
-            name <- expandPath f
-            newContents <- readFileUTF8 name
+            (name, newContents) <- trackFile e f
             Pandoc _ blocks <- do
                 doc <- parseDoc (Just name) newContents
                 let shifted = shiftTitles shift doc
@@ -57,7 +57,7 @@ includeBlock abp d@(Div (_blockId, _classes, namevals) _contents) =
             return blocks
         Nothing -> return [d]
 
-includeBlock _ x = return [x]
+includeBlock _ _ x = return [x]
 
 shiftTitles :: Int -> Pandoc -> Pandoc
 shiftTitles shift = bottomUp shiftTitle

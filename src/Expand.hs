@@ -27,9 +27,9 @@ module Expand
 where
 
 import Config
+import Dependencies
 import Environment
 import Tools
-import UTF8
 
 import Control.Concurrent.MVar
 import Control.Monad
@@ -174,7 +174,7 @@ expandBlock' e abp cb@(CodeBlock (_blockId, classes, namevals) contents) =
         maybeExternalMetaFile = lookup kMeta namevals
 
         expandMetaFromFile name = do
-            defs <- expandString' e name >>= readFileUTF8
+            (_, defs) <- trackFile e =<< expandString' e name
             expandMetaFromString (unlines [defs, contents])
 
         expandMetaFromString s = do

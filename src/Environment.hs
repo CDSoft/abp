@@ -39,6 +39,7 @@ import Text.Pandoc.JSON
 data Env = Env { format :: Maybe Format
                , vars :: [(String, Inline)]
                , quiet :: Bool
+               , deps :: [FilePath]
                }
 
 type EnvMVar = MVar Env
@@ -51,10 +52,11 @@ newEnv maybeFormat = do
              ++ [ (kAbpPath, Str abpPath)
                 ]
              ++ envVars
-    let q = isJust (lookup kABPQuiet vs)
+    let q = isJust (lookup kAbpQuiet vs)
     newMVar $ Env { format = maybeFormat
                   , vars = vs
                   , quiet = q
+                  , deps = []
                   }
 
 readEnv :: EnvMVar -> IO Env

@@ -71,18 +71,21 @@ copyright = unlines [
 help :: String
 help = unlines [
         "abp is a pandoc filter",
+        "",
         "Usage: pandoc --filter=abp",
+        "",
         "abp can be configured with environment variables:",
-        "  "++ljust 20 kABPQuiet++" disable stderr on script execution",
-        "  PLANTUML             plantuml.jar full path",
-        "  DITAA                ditaa.jar full path",
+        "  "++ljust 12 kAbpQuiet++" disable stderr on script execution",
+        "  "++ljust 12 kAbpTarget++" target name for dependency file generation",
+        "  "++ljust 12 kAbpPlantuml++" plantuml.jar full path",
+        "  "++ljust 12 kAbpDitaa++" ditaa.jar full path",
         "",
         "abp can be called on the command line to get additional information:",
         "Usage: " ++ name ++ " option",
         "Options:",
-        "  -v                   Display the current version",
-        "  -h                   Display this help message",
-        "  emojis               Show available Pandoc emojis",
+        "  -v           Display the current version",
+        "  -h           Display this help message",
+        "  emojis       Show available Pandoc emojis",
         "",
         "More information here: " ++ upstream
     ]

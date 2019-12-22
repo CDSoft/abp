@@ -284,7 +284,7 @@ Diagram             Predefined variable                     Render command
 
 Notes:
 
-- `dot: [GraphViz] support also includes `dot`, `neato`, `twopi`, `circo`, `fdp`, `sfdp`, `patchwork` and `osage`.
+- `dot`: [GraphViz] support also includes `dot`, `neato`, `twopi`, `circo`, `fdp`, `sfdp`, `patchwork` and `osage`.
 
 - `plantuml`: `{{PLANTUML}}`{.raw} can be defined as an environment variable.
     Its default value is the directory of the `abp` executable appended with `"plantuml.jar"`.
@@ -357,6 +357,22 @@ The table content can be defined in the code block or in an external file.
 | ```                                                                                           | ```                                                                                               |
 | ~~~                                                                                           |                                                                                                   |
 +-----------------------------------------------------------------------------------------------+---------------------------------------------------------------------------------------------------+
+
+Makefile dependencies
+=====================
+
+It is sometimes useful to build a dependency list on the fly.
+`abp` can generate a dependency list for make, in the same vein than the gcc `-M` option.
+The environment variable `ABP_TARGET` must be defined with the target name.
+`abp` will generate a file named `${ABP_TARGET}.d`{.sh} containing the dependencies of `${ABP_TARGET}`{.sh}.
+
+E.g.:
+
+``` sh
+ABP_TARGET=index.html pandoc -F ABP index.md -o index.html
+```
+
+This will produce a file named `index.html.d` containing `index.html: ...`.
 
 Licenses
 ========

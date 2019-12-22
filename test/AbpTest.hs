@@ -61,5 +61,5 @@ writer = runIOorExplode . writeMarkdown writerOptions
 (!=>) :: (HasCallStack) => Text -> ExitCode -> IO ()
 (!=>) input exitCode = do
     inputAst <- reader input
-    setEnv kABPQuiet "1"
+    setEnv kAbpQuiet "1"
     abp Nothing inputAst `shouldThrow` (==exitCode)

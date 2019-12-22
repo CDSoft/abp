@@ -24,11 +24,14 @@ where
 import Data.List.Extra
 import Text.Pandoc.JSON
 
-kABPQuiet :: String
-kABPQuiet = "ABP_QUIET"
+kAbpQuiet :: String
+kAbpQuiet = "ABP_QUIET"
 
 kAbpPath :: String
 kAbpPath = "ABP_PATH"
+
+kAbpTarget :: FilePath
+kAbpTarget = "ABP_TARGET"
 
 kAbpPlantuml, kPlantumlJar :: String
 kAbpPlantuml = "PLANTUML"
