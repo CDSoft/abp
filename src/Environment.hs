@@ -19,54 +19,148 @@
 -}
 
 module Environment
-    ( Env(..)
-    , EnvMVar
+    ( Env
     , newEnv
-    , readEnv
     , setVar
-    , getVar, getVarStr
+    , getVar
+    , quiet
+    , getFormat
+    , addDep
+    , getDeps
+    , runFile
+    , runString
+    , evalString
+    , setRender
     )
 where
 
 import Config
-import Tools
 
 import Control.Concurrent.MVar
+import Control.Monad
+import qualified Data.ByteString.Char8 as BS
+import qualified Data.Map as M
 import Data.Maybe
+import qualified Foreign.Lua as Lua
+import Foreign.Lua.Core.Constants (multret)
 import System.Environment
 import Text.Pandoc.JSON
 
-data Env = Env { format :: Maybe Format
-               , vars :: [(String, Inline)]
-               , quiet :: Bool
-               , deps :: [FilePath]
-               }
+--import System.IO
 
-type EnvMVar = MVar Env
+data State = State
+    { format :: Maybe Format
+    , deps :: [FilePath]
+    , luastate :: Lua.State
+    }
 
-newEnv :: Maybe Format -> IO EnvMVar
+type Env = MVar State
+
+newEnv :: Maybe Format -> IO Env
 newEnv maybeFormat = do
-    envVars <- map (\(var, val) -> (var, Str val)) <$> getEnvironment
-    abpPath <- getExecutablePath
-    let vs = [ ("format", Str fmt) | Format fmt <- maybeToList maybeFormat ]
-             ++ [ (kAbpPath, Str abpPath)
-                ]
-             ++ envVars
-    let q = isJust (lookup kAbpQuiet vs)
-    newMVar $ Env { format = maybeFormat
-                  , vars = vs
-                  , quiet = q
-                  , deps = []
-                  }
+    --hPrint stderr "newstate"
+    lua <- Lua.newstate
+    --hPrint stderr "openlibs"
+    Lua.runWith lua Lua.openlibs
+    --hPrint stderr "openlibs done"
+    mvar <- newMVar State { format = maybeFormat
+                          , deps = []
+                          , luastate = lua
+                          }
+    envVars <- getEnvironment
+    forM_ envVars $ uncurry (setVar mvar)
+    case maybeFormat of
+        Just (Format fmt) -> setVar mvar "format" fmt
+        Nothing -> return ()
+    setVar mvar kAbpPath =<< getExecutablePath
+    return mvar
 
-readEnv :: EnvMVar -> IO Env
-readEnv = readMVar
+setVar :: Env -> String -> String -> IO ()
+setVar env var val = do
+    state <- readMVar env
+    --hPrint stderr ("setvar", var, val)
+    Lua.runWith (luastate state) $ do
+        Lua.push val
+        Lua.setglobal' var
+    --hPrint stderr "setvar done"
 
-setVar :: EnvMVar -> String -> Inline -> IO ()
-setVar mvar var val = modifyMVar_ mvar (\e -> return e { vars = (var, val) : vars e })
+getVar :: Env -> String -> IO (Maybe String)
+getVar env var = do
+    state <- readMVar env
+    --hPrint stderr ("getvar", var)
+    val <- Lua.runWith (luastate state) $
+        Lua.getglobal var *> Lua.peekEither (-1)
+    --hPrint stderr "getvar done"
+    return $ case val of
+        Right s -> Just s
+        Left _ -> Nothing
 
-getVar :: EnvMVar -> String -> IO (Maybe Inline)
-getVar e var = lookup var . vars <$> readMVar e
+quiet :: Env -> IO Bool
+quiet env = isJust <$> getVar env kAbpQuiet
 
-getVarStr :: EnvMVar -> String -> IO (Maybe String)
-getVarStr e var = mapM inlineToPlainText =<< getVar e var
+getFormat :: Env -> IO (Maybe Format)
+getFormat env = format <$> readMVar env
+
+addDep :: Env -> FilePath -> IO ()
+addDep env name = modifyMVar_ env (\s -> return s { deps = name : deps s })
+
+getDeps :: Env -> IO [FilePath]
+getDeps env = deps <$> readMVar env
+
+runFile :: Env -> FilePath -> IO ()
+runFile env name = do
+    state <- readMVar env
+    --hPrint stderr ("dofile", name)
+    status <- Lua.runWith (luastate state) $ Lua.dofile name
+    --hPrint stderr "dofile done"
+    case status of
+        Lua.OK -> return ()
+        _ -> error $ "Can not execute Lua script: " ++ name
+
+runString :: Env -> String -> IO ()
+runString env s = do
+    state <- readMVar env
+    --hPrint stderr ("dostring", s)
+    status <- Lua.runWith (luastate state) $ Lua.dostring (BS.pack s)
+    --hPrint stderr "dostring done"
+    case status of
+        Lua.OK -> return ()
+        _ -> error $ unlines ["Can not execute Lua script:", s]
+
+evalString :: Env -> String -> IO String
+evalString env s = do
+    state <- readMVar env
+    --hPrint stderr ("evalstring", s)
+    value <- Lua.runWith (luastate state) $ do
+        res <- Lua.loadstring (BS.pack ("return tostring(" ++ s ++ ")"))
+        case res of
+            Lua.OK -> Lua.pcall 0 multret Nothing *> Lua.peekEither (-1)
+            _ -> return $ Left ("Can not compile Lua expression:" ++ s)
+    --hPrint stderr "evalstring done"
+    case value of
+        Right value' -> return value'
+        Left err -> error $ "Can not evaluate Lua expression:" ++ s ++ ": " ++ show err
+
+setRender :: Env -> String -> String -> [(String, String)] -> IO ()
+setRender env name render extrenders = do
+    --hPrint stderr ("setRender", name, render, extrenders)
+    state <- readMVar env
+    Lua.runWith (luastate state) $ do
+        Lua.newtable                -- render table
+
+        Lua.createtable 0 2         -- metatable
+
+        Lua.push "__tostring"
+        Lua.pushHaskellFunction (luaConstantFunction (BS.pack render))
+        Lua.rawset (-3)
+
+        Lua.push "__index"
+        Lua.push (M.fromList extrenders)
+        Lua.rawset (-3)
+
+        Lua.setmetatable (-2)               -- setmetatable(t, mt)
+        Lua.setglobal name
+    --hPrint stderr "setRender done"
+
+luaConstantFunction :: BS.ByteString -> M.Map String String -> Lua.Lua BS.ByteString
+luaConstantFunction value _ = return value

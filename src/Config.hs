@@ -41,8 +41,16 @@ kAbpDitaa, kDitaaJar :: String
 kAbpDitaa = "DITAA"
 kDitaaJar = "ditaa.jar"
 
-kDiagramRenderers :: Maybe Format -> [(String, String)]
-kDiagramRenderers fmt = concatMap mkEngine engines
+--kDiagramRenderers :: Maybe Format -> [(String, String)]
+kDiagramRenderers :: Maybe Format -> [ ( String     -- diagram name
+                                       , String     -- default command
+                                       , [ ( String -- format
+                                           , String -- command for a specific format
+                                           )
+                                         ]
+                                       )
+                                     ]
+kDiagramRenderers fmt = map mkEngine engines
     where
         engines = [ (name, "svg png pdf", \exe ext -> unwords [exe, "-T"++ext, "-o %o", "%i"])
                   | name <- words "dot neato twopi circo fdp sfdp patchwork osage"
@@ -65,7 +73,18 @@ kDiagramRenderers fmt = concatMap mkEngine engines
                     Just (Format "html") -> defaultHTML
                     Just (Format "latex") -> defaultLaTeX
                     _ -> defaultHTML
-            in (exe, replace "%o" ("%o."++defaultExt) (cmd exe defaultExt)) : [ (exe++"."++ext, replace "%o" ("%o."++ext) (cmd exe ext)) | ext <- exts' ]
+            in ( exe
+               , replace "%o" ("%o."++defaultExt) (cmd exe defaultExt)
+               , [ ( ext
+                   , replace "%o" ("%o."++ext) (cmd exe ext)
+                   )
+                   | ext <- exts'
+                 ]
+               )
+            -- TODO: utiliser une metatable pour les formats
+            --          dot => string pour dot avec une metatable qui définit dot.png, dot.svg, ...
+            --          Environment doit créer une string avec la bonne métatable si pas de point dans le nom
+            --          sinon, juste une string
 
 kMeta, kIfdef, kValue, kIfndef :: String
 kMeta = "meta"

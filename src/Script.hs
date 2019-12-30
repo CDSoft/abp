@@ -63,9 +63,10 @@ runScript e cmd contents =
         hClose handle
         --setFileMode path 0o550
         res <- readProcessUTF8 (makeCmd cmd path) []
+        q <- quiet e
         case res of
             Left (err, exitCode) -> do
-                unless (quiet e) $ do
+                unless q $ do
                     hPutStrLn stderr "Script failed:"
                     hPutStrLn stderr contents
                     hPutStrLn stderr "Errors:"

@@ -20,6 +20,8 @@
 
 module Tools
     ( inlineToPlainText
+    , markdownToInline
+    , noFilter
     , ljust
     , atoi
     , expandPath
@@ -71,3 +73,21 @@ parseDoc maybeName = runIOorExplode . reader options . T.pack
             Just name |  ".html" `isSuffixOf` name -> readHtml
             Just name -> error $ "Unknown file format: " ++ name
             Nothing -> readMarkdown
+
+markdownToInline :: (Pandoc -> IO Pandoc) -> String -> IO Inline
+markdownToInline abp s = do
+    Pandoc _ blocks <- parseDoc Nothing s >>= abp
+    return $ blocksToInline s blocks
+
+noFilter :: Pandoc -> IO Pandoc
+noFilter = return
+
+blocksToInline :: String -> [Block] -> Inline
+blocksToInline _ [] = Span nullAttr []
+blocksToInline _ [Plain [x]] = x
+blocksToInline _ [Plain xs] = Span nullAttr xs
+blocksToInline _ [Para [x]] = x
+blocksToInline _ [Para xs] = Span nullAttr xs
+blocksToInline _ [LineBlock [[x]]] = x
+blocksToInline s [Div _ blocks] = blocksToInline s blocks
+blocksToInline s _ = error $ "invalid inline text: " ++ show s

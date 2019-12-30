@@ -29,24 +29,20 @@ import Environment
 import Tools
 import UTF8
 
-import Control.Concurrent.MVar
 import Data.List
 
-addDep :: EnvMVar -> FilePath -> IO ()
-addDep mvar name = modifyMVar_ mvar (\e -> return e { deps = name : deps e })
-
-trackFile :: EnvMVar -> FilePath -> IO (FilePath, String)
+trackFile :: Env -> FilePath -> IO (FilePath, String)
 trackFile e name = do
     addDep e name
     name' <- expandPath name
     contents <- readFileUTF8 name'
     return (name', contents)
 
-writeDependencies :: EnvMVar -> IO ()
+writeDependencies :: Env -> IO ()
 writeDependencies e = do
-    Env { vars = vs, deps = ds } <- readMVar e
-    case lookup kAbpTarget vs of
-        Just target -> do
-            target' <- inlineToPlainText target
-            writeFile (target'++".d") $ target'++": "++unwords (sort (nub ds))++"\n"
+    ds <- getDeps e
+    maybeTarget <- getVar e kAbpTarget
+    case maybeTarget of
+        Just target ->
+            writeFile (target++".d") $ target++": "++unwords (sort (nub ds))++"\n"
         Nothing -> return ()

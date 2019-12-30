@@ -45,14 +45,13 @@ abp maybeFormat document = do
     e <- newEnv maybeFormat
     diagramEnv e
     let abpFilter doc = do
-            doc' <- expandDoc e abpFilter doc   -- variable expansion, must be done before other filters
-            e' <- readEnv e
+            doc' <- expandDoc e doc   -- variable expansion, must be done before other filters
             inject doc'
                 >>= pf commentBlock
                 >>= pf (includeBlock e abpFilter)
-                >>= pf (scriptInline e')
-                >>= pf (scriptBlock e')
-                >>= pf (diagramBlock e')
+                >>= pf (scriptInline e)
+                >>= pf (scriptBlock e)
+                >>= pf (diagramBlock e)
                 >>= pf csvBlock
     doc <- abpFilter document
     writeDependencies e

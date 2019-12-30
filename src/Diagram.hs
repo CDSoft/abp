@@ -18,6 +18,8 @@
     http://cdsoft.fr/abp
 -}
 
+{-# LANGUAGE TupleSections #-}
+
 module Diagram
     ( diagramEnv
     , diagramBlock
@@ -46,23 +48,26 @@ import System.IO.Temp
 import System.Process
 import Text.Pandoc.JSON
 
-diagramEnv :: EnvMVar -> IO ()
+diagramEnv :: Env -> IO ()
 diagramEnv e = do
     storeCustomPath e kAbpPlantuml kPlantumlJar
     storeCustomPath e kAbpDitaa kDitaaJar
-    e' <- readEnv e
-    forM_ (kDiagramRenderers (format e')) $ \(name, render) ->
-        setVar e name =<< expandString e render
+    format <- getFormat e
+    forM_ (kDiagramRenderers format) $ \(name, render, extrenders) -> do
+        render' <- expandString e render
+        extrenders' <- forM extrenders $ \(ext, r) -> (ext,) <$> expandString e r
+        --setVar e name =<< expandString e render
+        setRender e name render' extrenders'
 
-storeCustomPath :: EnvMVar -> String -> FilePath -> IO ()
+storeCustomPath :: Env -> String -> FilePath -> IO ()
 storeCustomPath e envVarName defaultBaseName = do
-    name <- getVarStr e envVarName
-    path <- getVarStr e kAbpPath
+    name <- getVar e envVarName
+    path <- getVar e kAbpPath
     let value = case (name, path) of
             (Just customValue, _) -> customValue
             (Nothing, Just abpPath) -> takeDirectory abpPath </> defaultBaseName
             (Nothing, Nothing) -> defaultBaseName
-    setVar e envVarName (Str value)
+    setVar e envVarName value
 
 diagramBlock :: Env -> Block -> IO [Block]
 diagramBlock e cb@(CodeBlock attr@(_blockId, _classes, namevals) contents) = do
@@ -131,7 +136,8 @@ renderDiagram e cmd contents = do
     exitCode <- waitForProcess hProc
     case exitCode of
         ExitFailure _ -> do
-            unless (quiet e) $ do
+            q <- quiet e
+            unless q $ do
                 hPutStrLn stderr "Diagram failed:"
                 hPutStrLn stderr contents
                 hPutStrLn stderr "Errors:"

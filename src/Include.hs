@@ -30,7 +30,7 @@ import Tools
 
 import Text.Pandoc
 
-includeBlock :: EnvMVar -> (Pandoc -> IO Pandoc) -> Block -> IO [Block]
+includeBlock :: Env -> (Pandoc -> IO Pandoc) -> Block -> IO [Block]
 
 includeBlock e _abp cb@(CodeBlock attr@(_blockId, _classes, namevals) _contents) =
     case lookup kInclude namevals of
