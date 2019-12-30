@@ -224,11 +224,7 @@ expandAttr e (blockId, classes, namevals) = do
     return (blockId', classes', namevals')
 
 expandString :: Env -> String -> IO String
-expandString e s = do
-    --hPrint stderr ("expandString", s)
-    s' <- expand s
-    --hPrint stderr (s, s')
-    return s'
+expandString e = expand
 
     where
 
@@ -247,7 +243,7 @@ expandString e s = do
             let name = reverse revName
             in case stripPrefix kVarClose str of
                 Just cs' -> do
-                    val <- evalString e name
+                    val <- fromMaybe (kVarOpen++name++kVarClose) <$> evalString e name
                     (val ++) <$> expandRegularText cs' ""
                 Nothing -> expandVar cs (c:revName)
         expandVar [] revName = expandRegularText [] (reverse (kVarOpen++reverse revName))

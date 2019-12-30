@@ -127,7 +127,7 @@ runString env s = do
         Lua.OK -> return ()
         _ -> error $ unlines ["Can not execute Lua script:", s]
 
-evalString :: Env -> String -> IO String
+evalString :: Env -> String -> IO (Maybe String)
 evalString env s = do
     state <- readMVar env
     --hPrint stderr ("evalstring", s)
@@ -137,9 +137,12 @@ evalString env s = do
             Lua.OK -> Lua.pcall 0 multret Nothing *> Lua.peekEither (-1)
             _ -> return $ Left ("Can not compile Lua expression:" ++ s)
     --hPrint stderr "evalstring done"
-    case value of
-        Right value' -> return value'
+    return $ case value of
+        Right "nil" -> Nothing -- I don't like this trick. How to detect nil values???
+        Right value' -> Just value'
         Left err -> error $ "Can not evaluate Lua expression:" ++ s ++ ": " ++ show err
+
+        -- TODO : si nil => Nothing
 
 setRender :: Env -> String -> String -> [(String, String)] -> IO ()
 setRender env name render extrenders = do
