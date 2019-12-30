@@ -74,6 +74,7 @@ expandMeta e meta = do
 expandMetaDef :: Env -> (String, MetaValue) -> IO (String, MetaValue)
 expandMetaDef e (var, val) = do
     val' <- expandMetaValue e val
+    setVar e var (show val')
     return (var, val')
 
 expandMetaValue :: Env -> MetaValue -> IO MetaValue

@@ -30,8 +30,10 @@ module Tools
     )
 where
 
+import Data.Bool
 import Data.List
 import Data.List.Extra
+import Data.Maybe
 import qualified Data.Text as T
 import System.Directory
 import System.FilePath.Posix
@@ -91,3 +93,10 @@ blocksToInline _ [Para xs] = Span nullAttr xs
 blocksToInline _ [LineBlock [[x]]] = x
 blocksToInline s [Div _ blocks] = blocksToInline s blocks
 blocksToInline s _ = error $ "invalid inline text: " ++ show s
+
+metaToInline :: MetaValue -> Maybe Inline
+metaToInline (MetaMap _) = Nothing
+metaToInline (MetaList []) = Just $ Span nullAttr []
+metaToInline (MetaList [x]) = metaToInline x
+metaToInline (MetaList xs) = Just $ Span nullAttr $ intersperse (Span nullAttr [Str ",", Space]) (mapMaybe metaToInline xs)
+metaToInline (MetaBool b) = Just $ Str $ bool "false" "true" b

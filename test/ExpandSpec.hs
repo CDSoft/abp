@@ -22,6 +22,8 @@
 
 module ExpandSpec where
 
+-- TODO: trouver un autre nom pour meta !
+
 import AbpTest
 
 import NeatInterpolation
@@ -115,30 +117,30 @@ spec = describe "variable expansion" $ do
         it "takes definitions from the active blocks" $ do
             [text|
                 ```meta
-                - lang: en
+                lang = "en"
                 ```
 
                 ```{.meta ifdef=lang value=en}
-                - hi: Hello
+                hi = "Hello"
                 ```
 
                 ```{.meta ifdef=lang value=fr}
-                - hi: Bonjour
+                hi = "Bonjour"
                 ```
 
                 hi = {{hi}}
             |] ==> "hi = Hello"
             [text|
                 ```meta
-                - lang: fr
+                lang = "fr"
                 ```
 
                 ```{.meta ifdef=lang value=en}
-                - hi: Hello
+                hi = "Hello"
                 ```
 
                 ```{.meta ifdef=lang value=fr}
-                - hi: Bonjour
+                hi = "Bonjour"
                 ```
 
                 hi = {{hi}}
