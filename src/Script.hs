@@ -61,7 +61,6 @@ runScript e cmd contents =
     withSystemTempFile "abp" $ \path handle -> do
         hWriteFileUTF8 handle contents
         hClose handle
-        --setFileMode path 0o550
         res <- readProcessUTF8 (makeCmd cmd path) []
         q <- quiet e
         case res of

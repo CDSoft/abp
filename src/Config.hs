@@ -41,7 +41,6 @@ kAbpDitaa, kDitaaJar :: String
 kAbpDitaa = "DITAA"
 kDitaaJar = "ditaa.jar"
 
---kDiagramRenderers :: Maybe Format -> [(String, String)]
 kDiagramRenderers :: Maybe Format -> [ ( String     -- diagram name
                                        , String     -- default command
                                        , [ ( String -- format
@@ -81,10 +80,6 @@ kDiagramRenderers fmt = map mkEngine engines
                    | ext <- exts'
                  ]
                )
-            -- TODO: utiliser une metatable pour les formats
-            --          dot => string pour dot avec une metatable qui définit dot.png, dot.svg, ...
-            --          Environment doit créer une string avec la bonne métatable si pas de point dans le nom
-            --          sinon, juste une string
 
 kMeta, kIfdef, kValue, kIfndef :: String
 kMeta = "meta"

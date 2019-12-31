@@ -46,8 +46,6 @@ import Foreign.Lua.Core.Constants (multret)
 import System.Environment
 import Text.Pandoc.JSON
 
---import System.IO
-
 data State = State
     { format :: Maybe Format
     , deps :: [FilePath]
@@ -58,11 +56,8 @@ type Env = MVar State
 
 newEnv :: Maybe Format -> IO Env
 newEnv maybeFormat = do
-    --hPrint stderr "newstate"
     lua <- Lua.newstate
-    --hPrint stderr "openlibs"
     Lua.runWith lua Lua.openlibs
-    --hPrint stderr "openlibs done"
     mvar <- newMVar State { format = maybeFormat
                           , deps = []
                           , luastate = lua
@@ -78,11 +73,9 @@ newEnv maybeFormat = do
 setVar :: Env -> String -> String -> IO ()
 setVar env var val = do
     state <- readMVar env
-    --hPrint stderr ("setvar", var, val)
     Lua.runWith (luastate state) $ do
         Lua.push val
         Lua.setglobal' var
-    --hPrint stderr "setvar done"
 
 getVar :: Env -> String -> IO (Maybe String)
 getVar = evalString
@@ -102,9 +95,7 @@ getDeps env = deps <$> readMVar env
 runFile :: Env -> FilePath -> IO ()
 runFile env name = do
     state <- readMVar env
-    --hPrint stderr ("dofile", name)
     status <- Lua.runWith (luastate state) $ Lua.dofile name
-    --hPrint stderr "dofile done"
     case status of
         Lua.OK -> return ()
         _ -> error $ "Can not execute Lua script: " ++ name
@@ -112,9 +103,7 @@ runFile env name = do
 runString :: Env -> String -> IO ()
 runString env s = do
     state <- readMVar env
-    --hPrint stderr ("dostring", s)
     status <- Lua.runWith (luastate state) $ Lua.dostring (BS.pack s)
-    --hPrint stderr "dostring done"
     case status of
         Lua.OK -> return ()
         _ -> error $ unlines ["Can not execute Lua script:", s]
@@ -122,23 +111,18 @@ runString env s = do
 evalString :: Env -> String -> IO (Maybe String)
 evalString env s = do
     state <- readMVar env
-    --hPrint stderr ("evalstring", s)
     value <- Lua.runWith (luastate state) $ do
         res <- Lua.loadstring (BS.pack ("return tostring(" ++ s ++ ")"))
         case res of
             Lua.OK -> Lua.pcall 0 multret Nothing *> Lua.peekEither (-1)
             _ -> return $ Left ("Can not compile Lua expression:" ++ s)
-    --hPrint stderr "evalstring done"
     return $ case value of
         Right "nil" -> Nothing -- I don't like this trick. How to detect nil values???
         Right value' -> Just value'
         Left err -> error $ "Can not evaluate Lua expression:" ++ s ++ ": " ++ show err
 
-        -- TODO : si nil => Nothing
-
 setRender :: Env -> String -> String -> [(String, String)] -> IO ()
 setRender env name render extrenders = do
-    --hPrint stderr ("setRender", name, render, extrenders)
     state <- readMVar env
     Lua.runWith (luastate state) $ do
         Lua.newtable                -- render table
@@ -155,7 +139,6 @@ setRender env name render extrenders = do
 
         Lua.setmetatable (-2)               -- setmetatable(t, mt)
         Lua.setglobal name
-    --hPrint stderr "setRender done"
 
 luaConstantFunction :: BS.ByteString -> M.Map String String -> Lua.Lua BS.ByteString
 luaConstantFunction value _ = return value

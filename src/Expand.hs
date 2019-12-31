@@ -20,8 +20,6 @@
 
 {-# LANGUAGE TupleSections #-}
 
--- TODO : if[n]def : tester aussi les boolean (yes/no/true/false/0/1) ccase indépendant
-
 module Expand
     ( expandDoc
     , expandString
@@ -42,11 +40,6 @@ import Network.URI.Encode
 import Text.Pandoc
 import Text.Pandoc.Walk
 
-import System.IO
---
---TODO : meta doit pouvoir contenir du lua et du yaml!
---          si yaml échoue, utiliser lua
-
 {- Walk through the whole document
 
     1. expand meta definitions
@@ -61,21 +54,15 @@ import System.IO
 
 expandDoc :: Env -> Pandoc -> IO Pandoc
 expandDoc e (Pandoc meta blocks) = do
-    --hPrint stderr ("expandDoc", blocks)
     meta' <- expandMeta e meta
     blocks' <- mapM (walkM (expandBlock e)) blocks
                >>= mapM (walkM (expandInline e))
-    --hPrint stderr ("expandDoc => ", blocks')
     return $ Pandoc meta' blocks'
 
 expandMeta :: Env -> Meta -> IO Meta
 expandMeta e meta = do
     meta' <- forM (M.toList (unMeta meta)) (expandMetaDef e)
-    --meta' <- M.mapM (expandMetaDef e) (unMeta meta)
     return Meta { unMeta = M.fromList meta' }
-    --defs <- M.fromList <$> mapM (expandMetaDef e) (M.toList (unMeta meta))
-    --let meta' = Meta { unMeta = defs }
-    --return meta'
 
 expandMetaDef :: Env -> (String, MetaValue) -> IO (String, MetaValue)
 expandMetaDef e (var, val) = do
@@ -111,9 +98,7 @@ itemIsEnabled e (_, _, namevals) = do
         maybeVal = lookup kValue namevals
         maybeUndefName = lookup kIfndef namevals
     case (maybeDefName, maybeVal, maybeUndefName) of
-            (Just defName, Nothing, _) -> do
-                hPrint stderr =<< ((("defName: "++defName++"=")++) . show <$> getVar e defName)
-                isTrue <$> getVar e defName
+            (Just defName, Nothing, _) -> isTrue <$> getVar e defName
             (Just defName, Just value, _) -> (==Just value) <$> getVar e defName
             (Nothing, _, Just undefName) -> not . isTrue <$> getVar e undefName
             _ -> return True
@@ -156,7 +141,7 @@ expandInline e x = expandInline' e x
 
 {- expand strings -}
 expandInline' :: Env -> Inline -> IO Inline
-expandInline' e (Str s) = markdownToInline noFilter =<< expandString e s -- Str <$> expandString' e s
+expandInline' e (Str s) = markdownToInline noFilter =<< expandString e s
 expandInline' e (Code attrs s) = Code <$> expandAttr e attrs <*> expandString e s
 expandInline' e (Math mathType s) = Math mathType <$> expandString e s
 expandInline' e (RawInline fmt s) = RawInline fmt <$> expandString e s
@@ -215,12 +200,10 @@ expandBlock' e cb@(CodeBlock (_blockId, classes, namevals) contents) =
 
         expandMetaFromFile name = do
             void $ trackFile e name
-            -- TODO : yaml or lua
             runFile e name
             return Null
 
         expandMetaFromString s = do
-            -- TODO : yaml or lua
             runString e s
             return Null
 

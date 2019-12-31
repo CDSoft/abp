@@ -56,7 +56,6 @@ diagramEnv e = do
     forM_ (kDiagramRenderers format) $ \(name, render, extrenders) -> do
         render' <- expandString e render
         extrenders' <- forM extrenders $ \(ext, r) -> (ext,) <$> expandString e r
-        --setVar e name =<< expandString e render
         setRender e name render' extrenders'
 
 storeCustomPath :: Env -> String -> FilePath -> IO ()

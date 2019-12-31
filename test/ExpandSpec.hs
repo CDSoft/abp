@@ -97,7 +97,16 @@ spec = describe "variable expansion" $ do
 
     it "gets variable definitions from a YAML file" $
         [text|
-            ```{meta=package.yaml}
+            ``` meta
+            -- TODO: could be implemented in Haskell or as a separate Lua script
+            for s in io.open "package.yaml" : lines() do
+                s:gsub([[%s*(%w+)%s*:%s*(.*)]],
+                    function(var, val)
+                        if val:match[[^".*"$]] then val = val:gsub([[^"]], ""):gsub([["$]], "") end
+                        _G[var] = val
+                    end
+                )
+            end
             ```
 
             name = {{name}}
