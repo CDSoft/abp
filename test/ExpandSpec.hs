@@ -99,7 +99,7 @@ spec = describe "variable expansion" $ do
         [text|
             ``` meta
             -- TODO: could be implemented in Haskell or as a separate Lua script
-            for s in io.open "package.yaml" : lines() do
+            for s in io.lines "package.yaml" do
                 s:gsub([[%s*(%w+)%s*:%s*(.*)]],
                     function(var, val)
                         if val:match[[^".*"$]] then val = val:gsub([[^"]], ""):gsub([["$]], "") end
