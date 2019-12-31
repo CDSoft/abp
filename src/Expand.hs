@@ -20,6 +20,8 @@
 
 {-# LANGUAGE TupleSections #-}
 
+-- TODO : if[n]def : tester aussi les boolean (yes/no/true/false/0/1) ccase indépendant
+
 module Expand
     ( expandDoc
     , expandString
@@ -32,6 +34,7 @@ import Environment
 import Tools
 
 import Control.Monad
+import Data.Char
 import Data.List
 import qualified Data.Map as M
 import Data.Maybe
@@ -39,7 +42,10 @@ import Network.URI.Encode
 import Text.Pandoc
 import Text.Pandoc.Walk
 
---import System.IO
+import System.IO
+--
+--TODO : meta doit pouvoir contenir du lua et du yaml!
+--          si yaml échoue, utiliser lua
 
 {- Walk through the whole document
 
@@ -74,7 +80,9 @@ expandMeta e meta = do
 expandMetaDef :: Env -> (String, MetaValue) -> IO (String, MetaValue)
 expandMetaDef e (var, val) = do
     val' <- expandMetaValue e val
-    setVar e var (show val')
+    case metaToInline val' of
+        Just inline -> setVar e var =<< inlineToMarkdown inline
+        Nothing -> return ()
     return (var, val')
 
 expandMetaValue :: Env -> MetaValue -> IO MetaValue
@@ -103,10 +111,17 @@ itemIsEnabled e (_, _, namevals) = do
         maybeVal = lookup kValue namevals
         maybeUndefName = lookup kIfndef namevals
     case (maybeDefName, maybeVal, maybeUndefName) of
-            (Just defName, Nothing, _) -> isJust <$> getVar e defName
+            (Just defName, Nothing, _) -> do
+                hPrint stderr =<< ((("defName: "++defName++"=")++) . show <$> getVar e defName)
+                isTrue <$> getVar e defName
             (Just defName, Just value, _) -> (==Just value) <$> getVar e defName
-            (Nothing, _, Just undefName) -> isNothing <$> getVar e undefName
+            (Nothing, _, Just undefName) -> not . isTrue <$> getVar e undefName
             _ -> return True
+
+isTrue :: Maybe String -> Bool
+isTrue Nothing = False
+isTrue (Just s) | map toLower s `elem` ["no", "n", "false", "nil"] = False
+isTrue _ = True
 
 rawFilter :: Attr -> a -> IO a -> IO a
 rawFilter attrs x f
@@ -200,10 +215,12 @@ expandBlock' e cb@(CodeBlock (_blockId, classes, namevals) contents) =
 
         expandMetaFromFile name = do
             void $ trackFile e name
+            -- TODO : yaml or lua
             runFile e name
             return Null
 
         expandMetaFromString s = do
+            -- TODO : yaml or lua
             runString e s
             return Null
 

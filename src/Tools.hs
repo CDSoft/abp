@@ -20,6 +20,7 @@
 
 module Tools
     ( inlineToPlainText
+    , inlineToMarkdown
     , markdownToInline
     , noFilter
     , ljust
@@ -27,6 +28,7 @@ module Tools
     , expandPath
     , cleanAttr
     , parseDoc
+    , metaToInline
     )
 where
 
@@ -44,6 +46,12 @@ inlineToPlainText inline = trim . T.unpack <$> runIOorExplode (writer doc)
     where
         doc = Pandoc nullMeta [Plain [inline]]
         writer = writePlain def
+
+inlineToMarkdown :: Inline -> IO String
+inlineToMarkdown inline = trim . T.unpack <$> runIOorExplode (writer doc)
+    where
+        doc = Pandoc nullMeta [Plain [inline]]
+        writer = writeMarkdown def
 
 ljust :: Int -> String -> String
 ljust w s = s ++ replicate (w - length s) ' '
@@ -100,3 +108,9 @@ metaToInline (MetaList []) = Just $ Span nullAttr []
 metaToInline (MetaList [x]) = metaToInline x
 metaToInline (MetaList xs) = Just $ Span nullAttr $ intersperse (Span nullAttr [Str ",", Space]) (mapMaybe metaToInline xs)
 metaToInline (MetaBool b) = Just $ Str $ bool "false" "true" b
+metaToInline (MetaString s) = Just $ Str s
+metaToInline (MetaInlines []) = Just $ Span nullAttr []
+metaToInline (MetaInlines [x]) = Just x
+metaToInline (MetaInlines xs) = Just $ Span nullAttr xs
+metaToInline _ = Nothing
+

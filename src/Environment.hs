@@ -85,15 +85,7 @@ setVar env var val = do
     --hPrint stderr "setvar done"
 
 getVar :: Env -> String -> IO (Maybe String)
-getVar env var = do
-    state <- readMVar env
-    --hPrint stderr ("getvar", var)
-    val <- Lua.runWith (luastate state) $
-        Lua.getglobal var *> Lua.peekEither (-1)
-    --hPrint stderr "getvar done"
-    return $ case val of
-        Right s -> Just s
-        Left _ -> Nothing
+getVar = evalString
 
 quiet :: Env -> IO Bool
 quiet env = isJust <$> getVar env kAbpQuiet

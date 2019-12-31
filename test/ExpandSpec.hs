@@ -42,16 +42,16 @@ spec = describe "variable expansion" $ do
 
     it "does not expand unknown variables" $ do
         "{{foo}}" ==> "{{foo}}"
-        "```meta\n- foo: bar\n```\n\n{{foo}}" ==> "bar"
-        "```meta\n- foo: bar\n```\n\n{{fooo}}" ==> "{{fooo}}"
-        "```meta\n- foo: bar\n```\n\n{{ foo}}" ==> "{{ foo}}"
-        "```meta\n- foo: bar\n```\n\n{{foo }}" ==> "{{foo }}"
-        "```meta\n- foo: bar\n```\n\n{{f oo}}" ==> "{{f oo}}"
+        "```meta\nfoo = 'bar'\n```\n\n{{foo}}" ==> "bar"
+        "```meta\nfoo = 'bar'\n```\n\n{{fooo}}" ==> "{{fooo}}"
+        "```meta\nfoo = 'bar'\n```\n\n{{ foo}}" ==> "{{ foo}}"
+        "```meta\nfoo = 'bar'\n```\n\n{{foo }}" ==> "{{foo }}"
+        "```meta\nfoo = 'bar'\n```\n\n{{f oo}}" ==> "{{f oo}}"
 
     it "does not expand raw inlines" $
         [text|
             ```meta
-            - foo: bar
+            foo = "bar"
             ```
 
             not expanded:
@@ -70,7 +70,7 @@ spec = describe "variable expansion" $ do
     it "does not expand raw blocks" $
         [text|
             ```meta
-            - foo: bar
+            foo = "bar"
             ```
 
             ```{.raw}
@@ -86,14 +86,14 @@ spec = describe "variable expansion" $ do
     it "gets variable definitions from code blocks" $
         [text|
             ```meta
-            - foo: bar
-            - ok
+            foo = "bar"
+            ok = true
             ```
 
             foo = {{foo}};
             ok = {{ok}};
             nok = {{nok}};
-        |] ==> "foo = bar; ok = ; nok = {{nok}};"
+        |] ==> "foo = bar; ok = true; nok = {{nok}};"
 
     it "gets variable definitions from a YAML file" $
         [text|
@@ -106,8 +106,8 @@ spec = describe "variable expansion" $ do
     it "defines variables from other variables" $
         [text|
             ```meta
-            - bar: buzz
-            - foo: !{{bar}}!
+            bar = "buzz"
+            foo = "!"..bar.."!"
             ```
 
             foo = {{foo}}
@@ -148,7 +148,7 @@ spec = describe "variable expansion" $ do
         it "takes active blocks" $ do
             [text|
                 ```meta
-                - lang: en
+                lang = "en"
                 ```
 
                 ::: {ifdef=lang value=en}
@@ -165,14 +165,14 @@ spec = describe "variable expansion" $ do
                    |]
             [text|
                 ```meta
-                - lang: fr
+                lang = "fr"
                 ```
 
                 ::: {ifdef=lang value=en}
                 Hello
                 :::
 
-                :::{ifdef=lang value=fr}
+                ::: {ifdef=lang value=fr}
                 Bonjour
                 :::
             |] ==> [text|
@@ -180,36 +180,46 @@ spec = describe "variable expansion" $ do
                         Bonjour
                         :::
                    |]
-            "```meta\n\
-            \- debug:\n\
-            \```\n\n\
-            \::: {ifdef=debug}\n\
-            \debug is defined\n\
-            \:::\n\n\
-            \:::{ifndef=debug}\n\
-            \debug is not defined\n\
-            \:::\n\n\
-            \ " ==> "::: {ifdef=debug}\n\
-                   \debug is defined\n\
-                   \:::"
-            "```meta\n\
-            \- release:\n\
-            \```\n\n\
-            \::: {ifdef=debug}\n\
-            \debug is defined\n\
-            \:::\n\n\
-            \:::{ifndef=debug}\n\
-            \debug is not defined\n\
-            \:::\n\n\
-            \ " ==> "::: {ifndef=debug}\n\
-                   \debug is not defined\n\
-                   \:::"
+            [text|
+                ```meta
+                DEBUG = true
+                ```
+
+                ::: {ifdef=DEBUG}
+                DEBUG is defined
+                :::
+
+                :::{ifndef=DEBUG}
+                DEBUG is not defined
+                :::
+            |] ==> [text|
+                        ::: {ifdef=DEBUG}
+                        DEBUG is defined
+                        :::
+                   |]
+            [text|
+                ```meta
+                RELEASE = true
+                ```
+
+                ::: {ifdef=DEBUG}
+                DEBUG is defined
+                :::
+
+                :::{ifndef=DEBUG}
+                DEBUG is not defined
+                :::
+            |] ==> [text|
+                        ::: {ifndef=DEBUG}
+                        DEBUG is not defined
+                        :::
+                   |]
 
     context "conditional inlines" $
         it "takes active inlines" $ do
             let debug = [text|
                             ```meta
-                            - target: debug
+                            target = "debug"
                             ```
                         |]
             [text|
@@ -230,20 +240,20 @@ spec = describe "variable expansion" $ do
             |] ==> "target: debug [span 1]{ifdef=target value=debug}"
 
     it "expands strings in inlines" $ do
-        "```meta\n- foo: bar\n```\n\n{{foo}}" ==> "bar"
-        "```meta\n- foo: bar\n```\n\n*{{foo}}*" ==> "*bar*"
-        "```meta\n- foo: bar\n```\n\n**{{foo}}**" ==> "**bar**"
-        "```meta\n- foo: bar\n```\n\n~~{{foo}}~~" ==> "~~bar~~"
-        "```meta\n- foo: bar\n```\n\n~{{foo}}~" ==> "~bar~"
-        "```meta\n- foo: bar\n```\n\n^{{foo}}^" ==> "^bar^"
-        "```meta\n- foo: bar\n```\n\n```{{foo}}```{foo=\"{{foo}}\"}" ==> "```bar```{foo=bar}"
-        "```meta\n- foo: bar\n```\n\n${{foo}}$" ==> "$bar$"
-        "```meta\n- foo: bar\n- url: example.com\n```\n\n[{{foo}}]({{url}}){foo=\"{{foo}}\"}" ==> "[bar](example.com){foo=bar}"
-        "```meta\n- foo: bar\n- url: example.com\n```\n\n![{{foo}}]({{url}}){foo=\"{{foo}}\"}" ==> "![bar](example.com){foo=bar}"
-        "```meta\n- foo: bar\n```\n\n[{{foo}}]{foo=\"{{foo}}\"}" ==> "[bar]{foo=bar}"
+        "```meta\nfoo = 'bar'\n```\n\n{{foo}}" ==> "bar"
+        "```meta\nfoo = 'bar'\n```\n\n*{{foo}}*" ==> "*bar*"
+        "```meta\nfoo = 'bar'\n```\n\n**{{foo}}**" ==> "**bar**"
+        "```meta\nfoo = 'bar'\n```\n\n~~{{foo}}~~" ==> "~~bar~~"
+        "```meta\nfoo = 'bar'\n```\n\n~{{foo}}~" ==> "~bar~"
+        "```meta\nfoo = 'bar'\n```\n\n^{{foo}}^" ==> "^bar^"
+        "```meta\nfoo = 'bar'\n```\n\n```{{foo}}```{foo=\"{{foo}}\"}" ==> "```bar```{foo=bar}"
+        "```meta\nfoo = 'bar'\n```\n\n${{foo}}$" ==> "$bar$"
+        "```meta\nfoo = 'bar'\nurl = 'example.com'\n```\n\n[{{foo}}]({{url}}){foo=\"{{foo}}\"}" ==> "[bar](example.com){foo=bar}"
+        "```meta\nfoo = 'bar'\nurl = 'example.com'\n```\n\n![{{foo}}]({{url}}){foo=\"{{foo}}\"}" ==> "![bar](example.com){foo=bar}"
+        "```meta\nfoo = 'bar'\n```\n\n[{{foo}}]{foo=\"{{foo}}\"}" ==> "[bar]{foo=bar}"
 
     it "expands strings in blocks" $ do
-        "```meta\n- foo: bar\n- x: y\n```\n\n{{foo}}" ==> "bar"
-        "```meta\n- foo: bar\n- x: y\n```\n\n```{x=\"{{x}}\"}\n{{foo}}\n```" ==> "```{x=\"y\"}\nbar\n```"
-        "```meta\n- foo: bar\n- x: y\n```\n\n## {{foo}} {x=\"{{x}}\"}" ==> "## bar {#foo x=\"y\"}"
-        "```meta\n- foo: bar\n- x: y\n```\n\n:::{x=\"{{x}}\"}\n{{foo}}\n:::\n" ==> ":::{x=y}\nbar\n:::\n"
+        "```meta\nfoo = 'bar'\nx = 'y'\n```\n\n{{foo}}" ==> "bar"
+        "```meta\nfoo = 'bar'\nx = 'y'\n```\n\n```{x=\"{{x}}\"}\n{{foo}}\n```" ==> "```{x=\"y\"}\nbar\n```"
+        "```meta\nfoo = 'bar'\nx = 'y'\n```\n\n## {{foo}} {x=\"{{x}}\"}" ==> "## bar {#foo x=\"y\"}"
+        "```meta\nfoo = 'bar'\nx = 'y'\n```\n\n:::{x=\"{{x}}\"}\n{{foo}}\n:::\n" ==> ":::{x=y}\nbar\n:::\n"
