@@ -2,8 +2,21 @@
 % Christophe Delord - <https://cdsoft.fr/abp>
 % 13 December 2019
 
-```{meta="{{ABP_ROOT}}package.yaml"}
-- archive: {{name}}-{{version}}.tar.gz
+``` meta
+archive = "yo"
+--[[
+for s in io.lines "package.yaml" do
+    s:gsub([[%s*(%w+)%s*:%s*(.*)]],
+        function(var, val)
+            if val:match[[^".*"$]] then val = val:gsub([[^"]], ""):gsub([["$]], "") end
+            _G[var] = val
+        end
+    )
+end
+--]]
+
+--archive = name.."-"..version..".tar.gz"
+--io.stderr.write("archive", archive)
 ```
 
 [ABP]: https://cdsoft.fr/abp "ABP - Abstract Preprocessor (for Pandoc)"

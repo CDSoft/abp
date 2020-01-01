@@ -41,6 +41,8 @@ import System.Directory
 import System.FilePath.Posix
 import Text.Pandoc
 
+import System.IO
+
 inlineToPlainText :: Inline -> IO String
 inlineToPlainText inline = trim . T.unpack <$> runIOorExplode (writer doc)
     where
@@ -87,6 +89,7 @@ parseDoc maybeName = runIOorExplode . reader options . T.pack
 markdownToInline :: (Pandoc -> IO Pandoc) -> String -> IO Inline
 markdownToInline abp s = do
     Pandoc _ blocks <- parseDoc Nothing s >>= abp
+    hPrint stderr ("blocks", blocks)
     return $ blocksToInline s blocks
 
 noFilter :: Pandoc -> IO Pandoc
