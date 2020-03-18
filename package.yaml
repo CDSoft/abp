@@ -17,16 +17,19 @@
 # http://cdsoft.fr/abp
 
 name:                abp
-version:             0.1.8.0
+version:             0.1.8.1
 github:              "CDSoft/abp"
 license:             GPL-3
 author:              "Christophe Delord"
 maintainer:          "cdsoft.fr"
-copyright:           "2019 Christophe Delord"
+copyright:           "2019-2020 Christophe Delord"
 
 extra-source-files:
 - README.md
 - package.yaml
+- doc/abp.md
+- doc/hello.dot
+- stack.yaml
 
 # Metadata used when publishing your package
 # synopsis:            Short description of your package
