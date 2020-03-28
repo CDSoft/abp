@@ -44,21 +44,20 @@ reader = runIOorExplode . readMarkdown readerOptions
 writer :: Pandoc -> IO Text
 writer = runIOorExplode . writeMarkdown writerOptions
 
-(==>) :: (HasCallStack) => Text -> Text -> IO ()
-(==>) input expectedOutput = do
-    output <- reader input >>= abp Nothing >>= writer
+(==>) :: HasCallStack => Text -> Text -> IO ()
+(==>) = runTest Nothing
+
+(==>*) :: HasCallStack => Text -> Text -> IO ()
+(==>*) = runTest (Just (Format "html"))
+
+runTest :: HasCallStack => Maybe Format -> Text -> Text -> IO ()
+runTest format input expectedOutput = do
+    output <- reader input >>= abp format >>= writer
     outputAst <- reader output
     expectedOutputAst <- reader expectedOutput
     outputAst `shouldBe` expectedOutputAst
 
-(==>*) :: (HasCallStack) => Text -> Text -> IO ()
-(==>*) input expectedOutput = do
-    output <- reader input >>= abp (Just (Format "html")) >>= writer
-    outputAst <- reader output
-    expectedOutputAst <- reader expectedOutput
-    outputAst `shouldBe` expectedOutputAst
-
-(!=>) :: (HasCallStack) => Text -> ExitCode -> IO ()
+(!=>) :: HasCallStack => Text -> ExitCode -> IO ()
 (!=>) input exitCode = do
     inputAst <- reader input
     setEnv kAbpQuiet "1"

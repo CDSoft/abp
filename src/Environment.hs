@@ -32,6 +32,7 @@ import Config
 import Tools
 
 import Control.Concurrent.MVar
+import Data.Bifunctor
 import Data.Maybe
 import System.Environment
 import Text.Pandoc.JSON
@@ -46,7 +47,7 @@ type EnvMVar = MVar Env
 
 newEnv :: Maybe Format -> IO EnvMVar
 newEnv maybeFormat = do
-    envVars <- map (\(var, val) -> (var, Str val)) <$> getEnvironment
+    envVars <- map (second Str) <$> getEnvironment
     abpPath <- getExecutablePath
     let vs = [ ("format", Str fmt) | Format fmt <- maybeToList maybeFormat ]
              ++ [ (kAbpPath, Str abpPath)

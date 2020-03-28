@@ -1,4 +1,7 @@
 .stack-work/
 stack.yaml.lock
 abp.cabal
+doc/abp.html
+doc/cdsoft.css
+doc/img
 *~

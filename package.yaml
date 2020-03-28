@@ -17,7 +17,7 @@
 # http://cdsoft.fr/abp
 
 name:                abp
-version:             0.1.8.1
+version:             0.1.8.2
 github:              "CDSoft/abp"
 license:             GPL-3
 author:              "Christophe Delord"
@@ -44,12 +44,15 @@ description:         Abstract Processor for Pandoc
 dependencies:
 - base >= 4.7 && < 5
 
-library:
-  source-dirs: src
+_common: &common
   ghc-options:
   - -Wall -Werror
   - -O3
   - -fwarn-unused-do-bind
+
+library:
+  <<: *common
+  source-dirs: src
   dependencies:
   - bytestring
   - containers
@@ -69,12 +72,9 @@ library:
 
 executables:
   abp:
+    <<: *common
     main:                abp.hs
     source-dirs:         app
-    ghc-options:
-    - -Wall -Werror
-    - -O3
-    - -fwarn-unused-do-bind
     dependencies:
     - abp
     - pandoc-types
@@ -82,12 +82,9 @@ executables:
 
 tests:
   abp-test:
+    <<: *common
     main:                Spec.hs
     source-dirs:         test
-    ghc-options:
-    - -Wall -Werror
-    - -O3
-    - -fwarn-unused-do-bind
     dependencies:
     - abp
     - directory
