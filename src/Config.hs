@@ -64,6 +64,7 @@ kDiagramRenderers fmt = concatMap mkEngine engines
                 defaultExt = case fmt of
                     Just (Format "html") -> defaultHTML
                     Just (Format "latex") -> defaultLaTeX
+                    Just (Format "beamer") -> defaultLaTeX
                     _ -> defaultHTML
             in (exe, replace "%o" ("%o."++defaultExt) (cmd exe defaultExt)) : [ (exe++"."++ext, replace "%o" ("%o."++ext) (cmd exe ext)) | ext <- exts' ]
 
