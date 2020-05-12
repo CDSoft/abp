@@ -1,6 +1,6 @@
 % Abstract Processor (for Pandoc)
 % Christophe Delord - <https://cdsoft.fr/abp>
-% 13 December 2019
+% 13 Mai 2020
 
 ```{meta="{{ABP_ROOT}}package.yaml"}
 - archive: {{name}}-{{version}}.tar.gz

@@ -19,6 +19,7 @@
 -}
 
 {-# LANGUAGE TupleSections #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 module Expand
     ( expandDoc
@@ -27,6 +28,7 @@ module Expand
 where
 
 import Config
+import qualified Data.Text as T
 import Dependencies
 import Environment
 import Tools
@@ -67,7 +69,7 @@ expandMeta e meta = do
     let meta' = Meta { unMeta = defs }
     return meta'
 
-expandMetaDef :: EnvMVar -> (String, MetaValue) -> IO (String, MetaValue)
+expandMetaDef :: EnvMVar -> (T.Text, MetaValue) -> IO (T.Text, MetaValue)
 expandMetaDef e (var, val) = do
     val' <- expandMetaValue e val
     forM_ (metaValueToInline val') (setVar e var)
@@ -141,10 +143,12 @@ expandInline' e (Image attrs x (url, title)) = Image <$> expandAttr e attrs <*> 
 expandInline' e (Span attrs x) = Span <$> expandAttr e attrs <*> return x
 expandInline' _ x = return x
 
-expandURL :: EnvMVar -> String -> IO String
-expandURL e url = encodeWith allowed <$> expandString' e (decode url)
+expandURL :: EnvMVar -> T.Text -> IO T.Text
+expandURL e url = T.pack . encodeWith allowed . T.unpack <$> expandString' e ((T.pack . decode . T.unpack) url)
     where
-        allowed c = (c `elem` ":/@#?=") || isAllowed c
+        allowedChars :: String
+        allowedChars = ":/@#?="
+        allowed c = (c `elem` allowedChars) || isAllowed c
 
 {- Expand blocks
 
@@ -167,15 +171,15 @@ expandBlock' :: EnvMVar -> (Pandoc -> IO Pandoc) -> Block -> IO Block
 expandBlock' e abp cb@(CodeBlock (_blockId, classes, namevals) contents) =
     case (maybeExternalMetaFile, isMetaClass) of
         (Just externalMetaFile, _) -> expandMetaFromFile externalMetaFile
-        (Nothing, True) -> expandMetaFromString contents
+        (Nothing, True) -> expandMetaFromString (T.unpack contents)
         (Nothing, False) -> expandBlock'' e cb -- not a definition block => expand strings
     where
         isMetaClass = kMeta `elem` classes
         maybeExternalMetaFile = lookup kMeta namevals
 
         expandMetaFromFile name = do
-            (_, defs) <- trackFile e =<< expandString' e name
-            expandMetaFromString (unlines [defs, contents])
+            (_, defs) <- trackFile e =<< T.unpack <$> expandString' e name
+            expandMetaFromString (T.unpack $ T.unlines [defs, contents])
 
         expandMetaFromString s = do
             forM_ (lines s) parseDef
@@ -187,8 +191,8 @@ expandBlock' e abp cb@(CodeBlock (_blockId, classes, namevals) contents) =
                 s4 = trim $ case dropWhile isSpace s2 of
                         ':':s3 -> s3
                         s3 -> s3
-            maybeInline <- stringToInline abp s4
-            forM_ maybeInline (setVar e var)
+            maybeInline <- stringToInline abp (T.pack s4)
+            forM_ maybeInline (setVar e (T.pack var))
 
 {- expand strings -}
 expandBlock' e _ x = expandBlock'' e x
@@ -207,7 +211,7 @@ expandAttr e (blockId, classes, namevals) = do
     namevals' <- forM namevals $ \(name, val) -> (name,) <$> expandString' e val
     return (blockId', classes', namevals')
 
-expandString :: EnvMVar -> String -> IO Inline
+expandString :: EnvMVar -> T.Text -> IO Inline
 expandString e s = do
     vs <- vars <$> readMVar e
     return $ case expand vs s of
@@ -216,25 +220,27 @@ expandString e s = do
 
     where
 
-        expand :: [(String, Inline)] -> String -> [Inline]
-        expand vs cs = expandRegularText vs cs ""
+        expand :: [(T.Text, Inline)] -> T.Text -> [Inline]
+        expand vs cs = expandRegularText vs (T.unpack cs) ""
 
+        expandRegularText :: [(T.Text, Inline)] -> String -> String -> [Inline]
         expandRegularText vs str@(c:cs) revCurrent =
             case stripPrefix kVarOpen str of
-                Just cs' -> Str (reverse revCurrent) : expandVar vs cs' ""
+                Just cs' -> Str (T.pack $ reverse revCurrent) : expandVar vs cs' ""
                 Nothing -> expandRegularText vs cs (c:revCurrent)
-        expandRegularText _ [] revCurrent = [Str (reverse revCurrent)]
+        expandRegularText _ [] revCurrent = [Str (T.pack $ reverse revCurrent)]
 
+        expandVar :: [(T.Text, Inline)] -> String -> String -> [Inline]
         expandVar vs str@(c:cs) revName =
             let name = reverse revName
             in case stripPrefix kVarClose str of
-                Just cs' -> case lookup name vs of
+                Just cs' -> case lookup (T.pack name) vs of
                     Just val -> val : expandRegularText vs cs' ""
                     Nothing -> expandRegularText vs cs' (reverse (kVarOpen++name++kVarClose))
                 Nothing -> expandVar vs cs (c:revName)
         expandVar vs [] revName = expandRegularText vs [] (reverse (kVarOpen++reverse revName))
 
-expandString' :: EnvMVar -> String -> IO String
+expandString' :: EnvMVar -> T.Text -> IO T.Text
 expandString' e s = inlineToPlainText =<< expandString e s
 
 metaValueToInline :: MetaValue -> Maybe Inline
@@ -245,7 +251,7 @@ metaValueToInline (MetaString s) = Just $ Str s
 metaValueToInline (MetaInlines xs) = Just $ Span nullAttr xs
 metaValueToInline _ = Nothing
 
-stringToInline :: (Pandoc -> IO Pandoc) -> String -> IO (Maybe Inline)
+stringToInline :: (Pandoc -> IO Pandoc) -> T.Text -> IO (Maybe Inline)
 stringToInline abp s = do
     Pandoc _ blocks <- parseDoc Nothing s >>= abp
     return $ blockToInline blocks

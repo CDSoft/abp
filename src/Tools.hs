@@ -29,14 +29,13 @@ module Tools
 where
 
 import Data.List
-import Data.List.Extra
 import qualified Data.Text as T
 import System.Directory
 import System.FilePath.Posix
 import Text.Pandoc
 
-inlineToPlainText :: Inline -> IO String
-inlineToPlainText inline = trim . T.unpack <$> runIOorExplode (writer doc)
+inlineToPlainText :: Inline -> IO T.Text
+inlineToPlainText inline = T.strip <$> runIOorExplode (writer doc)
     where
         doc = Pandoc nullMeta [Plain [inline]]
         writer = writePlain def
@@ -44,22 +43,22 @@ inlineToPlainText inline = trim . T.unpack <$> runIOorExplode (writer doc)
 ljust :: Int -> String -> String
 ljust w s = s ++ replicate (w - length s) ' '
 
-atoi :: String -> Int
-atoi = read
+atoi :: T.Text -> Int
+atoi = read . T.unpack
 
 expandPath :: FilePath -> IO FilePath
 expandPath ('~':'/':path) = (</> path) <$> getHomeDirectory
 expandPath path = return path
 
-cleanAttr :: [String] -> [String] -> Attr -> Attr
+cleanAttr :: [T.Text] -> [T.Text] -> Attr -> Attr
 cleanAttr classesToClean namesToClean (blockId, classes, namevals) =
     ( blockId
     , filter (`notElem` classesToClean) classes
     , filter ((`notElem` namesToClean) . fst) namevals
     )
 
-parseDoc :: Maybe FilePath -> String -> IO Pandoc
-parseDoc maybeName = runIOorExplode . reader options . T.pack
+parseDoc :: Maybe FilePath -> T.Text -> IO Pandoc
+parseDoc maybeName = runIOorExplode . reader options
     where
         options = def
             { readerExtensions = pandocExtensions

@@ -26,6 +26,7 @@ module UTF8 ( setUTF8Encoding
             )
 where
 
+import qualified Data.Text as T
 import System.Exit
 import System.IO
 import qualified System.IO.Strict as SIO
@@ -36,14 +37,14 @@ setUTF8Encoding :: Handle -> IO ()
 setUTF8Encoding h = hSetEncoding h utf8
 
 -- "readFileUTF8 name" reads an UTF-8 file.
-readFileUTF8 :: FilePath -> IO String
+readFileUTF8 :: FilePath -> IO T.Text
 readFileUTF8 name = do
     h <- openFile name ReadMode
     hSetEncoding h utf8
     -- the file must not be read lazily
     -- (in some case we want to be able to read files
     -- that have been previously produced by the same document)
-    content <- SIO.hGetContents h
+    content <- T.pack <$> SIO.hGetContents h
     hClose h
     return content
 
@@ -62,11 +63,11 @@ hWriteFileUTF8 handle content = do
 
 -- "readProcessUTF8 cmd arg" executes "cmd args"
 -- and returns the standard output produced by the command.
-readProcessUTF8 :: String -> [String] -> IO (Either (String, ExitCode) String)
+readProcessUTF8 :: String -> [String] -> IO (Either (String, ExitCode) T.Text)
 readProcessUTF8 cmd args = do
     (_, Just hOut, Just hErr, hProc) <- createProcess (shell (cmd ++ " " ++ unwords args)) { std_out = CreatePipe, std_err = CreatePipe }
     hSetEncoding hOut utf8
-    out <- SIO.hGetContents hOut
+    out <- T.pack <$> SIO.hGetContents hOut
     err <- SIO.hGetContents hErr
     exitCode <- waitForProcess hProc
     return $ case exitCode of

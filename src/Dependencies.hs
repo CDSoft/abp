@@ -25,6 +25,7 @@ module Dependencies
 where
 
 import Config
+import qualified Data.Text as T
 import Environment
 import Tools
 import UTF8
@@ -35,7 +36,7 @@ import Data.List
 addDep :: EnvMVar -> FilePath -> IO ()
 addDep mvar name = modifyMVar_ mvar (\e -> return e { deps = name : deps e })
 
-trackFile :: EnvMVar -> FilePath -> IO (FilePath, String)
+trackFile :: EnvMVar -> FilePath -> IO (FilePath, T.Text)
 trackFile e name = do
     addDep e name
     name' <- expandPath name
@@ -47,6 +48,6 @@ writeDependencies e = do
     Env { vars = vs, deps = ds } <- readMVar e
     case lookup kAbpTarget vs of
         Just target -> do
-            target' <- inlineToPlainText target
+            target' <- T.unpack <$> inlineToPlainText target
             writeFile (target'++".d") $ target'++": "++unwords (sort (nub ds))++"\n"
         Nothing -> return ()

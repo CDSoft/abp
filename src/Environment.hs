@@ -18,6 +18,8 @@
     http://cdsoft.fr/abp
 -}
 
+{-# LANGUAGE OverloadedStrings #-}
+
 module Environment
     ( Env(..)
     , EnvMVar
@@ -34,11 +36,12 @@ import Tools
 import Control.Concurrent.MVar
 import Data.Bifunctor
 import Data.Maybe
+import qualified Data.Text as T
 import System.Environment
 import Text.Pandoc.JSON
 
 data Env = Env { format :: Maybe Format
-               , vars :: [(String, Inline)]
+               , vars :: [(T.Text, Inline)]
                , quiet :: Bool
                , deps :: [FilePath]
                }
@@ -47,8 +50,8 @@ type EnvMVar = MVar Env
 
 newEnv :: Maybe Format -> IO EnvMVar
 newEnv maybeFormat = do
-    envVars <- map (second Str) <$> getEnvironment
-    abpPath <- getExecutablePath
+    envVars <- map (bimap T.pack (Str . T.pack)) <$> getEnvironment
+    abpPath <- T.pack <$> getExecutablePath
     let vs = [ ("format", Str fmt) | Format fmt <- maybeToList maybeFormat ]
              ++ [ (kAbpPath, Str abpPath)
                 ]
@@ -63,11 +66,11 @@ newEnv maybeFormat = do
 readEnv :: EnvMVar -> IO Env
 readEnv = readMVar
 
-setVar :: EnvMVar -> String -> Inline -> IO ()
+setVar :: EnvMVar -> T.Text -> Inline -> IO ()
 setVar mvar var val = modifyMVar_ mvar (\e -> return e { vars = (var, val) : vars e })
 
-getVar :: EnvMVar -> String -> IO (Maybe Inline)
+getVar :: EnvMVar -> T.Text -> IO (Maybe Inline)
 getVar e var = lookup var . vars <$> readMVar e
 
-getVarStr :: EnvMVar -> String -> IO (Maybe String)
+getVarStr :: EnvMVar -> T.Text -> IO (Maybe T.Text)
 getVarStr e var = mapM inlineToPlainText =<< getVar e var

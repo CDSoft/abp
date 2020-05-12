@@ -18,31 +18,35 @@
     http://cdsoft.fr/abp
 -}
 
+{-# LANGUAGE OverloadedStrings #-}
+
 module Config
 where
 
+import Data.Bifunctor
 import Data.List.Extra
+import qualified Data.Text as T
 import Text.Pandoc.JSON
 
-kAbpQuiet :: String
+kAbpQuiet :: T.Text
 kAbpQuiet = "ABP_QUIET"
 
-kAbpPath :: String
+kAbpPath :: T.Text
 kAbpPath = "ABP_PATH"
 
-kAbpTarget :: FilePath
+kAbpTarget :: T.Text
 kAbpTarget = "ABP_TARGET"
 
-kAbpPlantuml, kPlantumlJar :: String
+kAbpPlantuml, kPlantumlJar :: T.Text
 kAbpPlantuml = "PLANTUML"
 kPlantumlJar = "plantuml.jar"
 
-kAbpDitaa, kDitaaJar :: String
+kAbpDitaa, kDitaaJar :: T.Text
 kAbpDitaa = "DITAA"
 kDitaaJar = "ditaa.jar"
 
-kDiagramRenderers :: Maybe Format -> [(String, String)]
-kDiagramRenderers fmt = concatMap mkEngine engines
+kDiagramRenderers :: Maybe Format -> [(T.Text, T.Text)]
+kDiagramRenderers fmt = map (bimap T.pack T.pack) $ concatMap mkEngine engines
     where
         engines = [ (name, "svg png pdf", \exe ext -> unwords [exe, "-T"++ext, "-o %o", "%i"])
                   | name <- words "dot neato twopi circo fdp sfdp patchwork osage"
@@ -68,7 +72,7 @@ kDiagramRenderers fmt = concatMap mkEngine engines
                     _ -> defaultHTML
             in (exe, replace "%o" ("%o."++defaultExt) (cmd exe defaultExt)) : [ (exe++"."++ext, replace "%o" ("%o."++ext) (cmd exe ext)) | ext <- exts' ]
 
-kMeta, kIfdef, kValue, kIfndef :: String
+kMeta, kIfdef, kValue, kIfndef :: T.Text
 kMeta = "meta"
 kIfdef = "ifdef"
 kValue = "value"
@@ -78,25 +82,25 @@ kVarOpen, kVarClose :: String
 kVarOpen = "{{"
 kVarClose = "}}"
 
-kInclude, kFromLine, kToLine, kShift :: String
+kInclude, kFromLine, kToLine, kShift :: T.Text
 kInclude = "include"
 kFromLine = "fromline"
 kToLine = "toline"
 kShift = "shift"
 
-kCmd :: String
+kCmd :: T.Text
 kCmd = "cmd"
 
 kScriptArg :: Char
 kScriptArg = '%'
 
-kComment :: String
+kComment :: T.Text
 kComment = "comment"
 
-kRaw :: String
+kRaw :: T.Text
 kRaw = "raw"
 
-kRender, kImg, kOut, kDiagArgIn, kDiagArgOut, kTitle, kTarget :: String
+kRender, kImg, kOut, kDiagArgIn, kDiagArgOut, kTitle, kTarget :: T.Text
 kRender = "render"
 kImg = "img"
 kOut = "out"

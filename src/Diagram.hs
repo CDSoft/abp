@@ -18,6 +18,8 @@
     http://cdsoft.fr/abp
 -}
 
+{-# LANGUAGE OverloadedStrings #-}
+
 module Diagram
     ( diagramEnv
     , diagramBlock
@@ -37,6 +39,7 @@ import Data.Char
 import Data.List
 import Data.List.Extra
 import Data.Maybe
+import qualified Data.Text as T
 import System.Directory
 import System.Exit
 import System.FilePath.Posix
@@ -54,13 +57,13 @@ diagramEnv e = do
     forM_ (kDiagramRenderers (format e')) $ \(name, render) ->
         setVar e name =<< expandString e render
 
-storeCustomPath :: EnvMVar -> String -> FilePath -> IO ()
+storeCustomPath :: EnvMVar -> T.Text -> T.Text -> IO ()
 storeCustomPath e envVarName defaultBaseName = do
     name <- getVarStr e envVarName
     path <- getVarStr e kAbpPath
     let value = case (name, path) of
             (Just customValue, _) -> customValue
-            (Nothing, Just abpPath) -> takeDirectory abpPath </> defaultBaseName
+            (Nothing, Just abpPath) -> T.pack $ takeDirectory (T.unpack abpPath) </> T.unpack defaultBaseName
             (Nothing, Nothing) -> defaultBaseName
     setVar e envVarName (Str value)
 
@@ -74,44 +77,44 @@ diagramBlock e cb@(CodeBlock attr@(_blockId, _classes, namevals) contents) = do
     case maybeRender of
         Nothing -> return [cb]
         Just render -> do
-            let ext = getExt render
-            let img = fromMaybe (error $ kImg ++ " field missing in a diagram block") maybeImg
+            let ext = (T.pack . getExt . T.unpack) render
+            let img = fromMaybe (error $ T.unpack kImg ++ " field missing in a diagram block") maybeImg
             out <- expandPath $ case maybeOutputPath of
-                        Just out' -> out' </> takeFileName img
-                        Nothing -> img
-            let meta = out ++ ext ++ ".meta"
-            let metaContent = unlines [ "source: " ++ hashDigest
-                                      , "render: " ++ render
-                                      , "img: " ++ img
-                                      , "out: " ++ out
-                                      ]
+                        Just out' -> T.unpack out' </> takeFileName (T.unpack img)
+                        Nothing -> T.unpack img
+            let meta = out ++ T.unpack ext ++ ".meta"
+            let metaContent = T.unlines [ T.concat ["source: ", hashDigest]
+                                        , T.concat ["render: ", render]
+                                        , T.concat ["img: ", img]
+                                        , T.concat ["out: ", T.pack out]
+                                        ]
             imgExists <- doesFileExist out
             metaExists <- doesFileExist meta
             oldMeta <- if metaExists then readFileUTF8 meta else return ""
             when (not imgExists || metaContent /= oldMeta) $
                 withSystemTempFile "abp" $ \path handle -> do
-                    hWriteFileUTF8 handle contents
+                    hWriteFileUTF8 handle (T.unpack contents)
                     hClose handle
-                    writeFileUTF8 meta metaContent
-                    let render' = makeCmd path out render
+                    writeFileUTF8 meta (T.unpack metaContent)
+                    let render' = makeCmd path out (T.unpack render)
                     renderDiagram e render' contents
             let title = fromMaybe "" (lookup kTitle namevals)
             let attrs' = cleanAttr [] [kRender, kImg, kOut, kTarget, kTitle] attr
-            let image = Image attrs' [ Str title ] (img++ext, title)
+            let image = Image attrs' [ Str title ] (T.concat [img, ext], title)
             return $ case maybeTarget of
                 Just target -> [Para [ Link nullAttr [ image ] (target, title) ]]
                 Nothing -> [Para [ image ]]
 
 diagramBlock _ x = return [x]
 
-sha1 :: String -> String
-sha1 s = show sourceHash
+sha1 :: T.Text -> T.Text
+sha1 s = T.pack $ show sourceHash
     where
-        sourceHash = hash (BS.pack s) :: Digest SHA1
+        sourceHash = hash (BS.pack $ T.unpack s) :: Digest SHA1
 
 getExt :: String -> String
-getExt s | kDiagArgOut `isPrefixOf` s =
-    case dropPrefix kDiagArgOut s of
+getExt s | T.unpack kDiagArgOut `isPrefixOf` s =
+    case dropPrefix (T.unpack kDiagArgOut) s of
         '.':s' -> case takeWhile isAlphaNum s' of
                     s''@(_:_) -> '.':s''
                     _ -> ""
@@ -120,9 +123,9 @@ getExt (_:s) = getExt s
 getExt [] = ""
 
 makeCmd :: String -> String -> String -> String
-makeCmd src img = replace kDiagArgIn src . replace kDiagArgOut img
+makeCmd src img = replace (T.unpack kDiagArgIn) src . replace (T.unpack kDiagArgOut) img
 
-renderDiagram :: Env -> String -> String -> IO ()
+renderDiagram :: Env -> String -> T.Text -> IO ()
 renderDiagram e cmd contents = do
     (_, Just hOut, Just hErr, hProc) <- createProcess (shell cmd) { std_out = CreatePipe, std_err = CreatePipe }
     hSetEncoding hOut utf8
@@ -133,7 +136,7 @@ renderDiagram e cmd contents = do
         ExitFailure _ -> do
             unless (quiet e) $ do
                 hPutStrLn stderr "Diagram failed:"
-                hPutStrLn stderr contents
+                hPutStrLn stderr (T.unpack contents)
                 hPutStrLn stderr "Errors:"
                 hPutStrLn stderr err
             exitWith exitCode

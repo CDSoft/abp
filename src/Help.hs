@@ -19,6 +19,7 @@
 -}
 
 {-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 module Help
     ( name
@@ -75,10 +76,10 @@ help = unlines [
         "Usage: pandoc --filter=abp",
         "",
         "abp can be configured with environment variables:",
-        "  "++ljust 12 kAbpQuiet++" disable stderr on script execution",
-        "  "++ljust 12 kAbpTarget++" target name for dependency file generation",
-        "  "++ljust 12 kAbpPlantuml++" plantuml.jar full path",
-        "  "++ljust 12 kAbpDitaa++" ditaa.jar full path",
+        "  "++ljust 12 (T.unpack kAbpQuiet)++" disable stderr on script execution",
+        "  "++ljust 12 (T.unpack kAbpTarget)++" target name for dependency file generation",
+        "  "++ljust 12 (T.unpack kAbpPlantuml)++" plantuml.jar full path",
+        "  "++ljust 12 (T.unpack kAbpDitaa)++" ditaa.jar full path",
         "",
         "abp can be called on the command line to get additional information:",
         "Usage: " ++ name ++ " option",
@@ -95,7 +96,7 @@ emojis = table
     where
         table = Table [] [AlignLeft, AlignLeft] [0.0, 0.0] header body
         header = [[Plain [Str "Code"]], [Plain [Str "Emoji"]]]
-        body = [ [[Plain [Code ("",[],[]) (':':code++":")]], [Plain [Str value]]]
+        body = [ [[Plain [Code ("",[],[]) (T.concat [":", code, ":"])]], [Plain [Str value]]]
                | (code, value) <- emojiList
                ]
         emojiList = sort $ M.toList E.emojis

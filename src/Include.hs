@@ -24,6 +24,7 @@ module Include
 where
 
 import Config
+import qualified Data.Text as T
 import Dependencies
 import Environment
 import Tools
@@ -35,12 +36,12 @@ includeBlock :: EnvMVar -> (Pandoc -> IO Pandoc) -> Block -> IO [Block]
 includeBlock e _abp cb@(CodeBlock attr@(_blockId, _classes, namevals) _contents) =
     case lookup kInclude namevals of
         Just f  -> do
-            (_, newContents) <- trackFile e f
+            (_, newContents) <- trackFile e (T.unpack f)
             let newContents' = case (atoi <$> lookup kFromLine namevals, atoi <$> lookup kToLine namevals) of
                     (Nothing, Nothing)      -> newContents
-                    (Just from, Nothing)    -> unlines $ drop (from-1) $ lines newContents
-                    (Nothing, Just to)      -> unlines $ take to $ lines newContents
-                    (Just from, Just to)    -> unlines $ drop (from-1) . take to $ lines newContents
+                    (Just from, Nothing)    -> T.unlines $ drop (from-1) $ T.lines newContents
+                    (Nothing, Just to)      -> T.unlines $ take to $ T.lines newContents
+                    (Just from, Just to)    -> T.unlines $ drop (from-1) . take to $ T.lines newContents
             let attr' = cleanAttr [] [kInclude, kFromLine, kToLine] attr
             return [CodeBlock attr' newContents']
         Nothing -> return [cb]
@@ -49,7 +50,7 @@ includeBlock e abp d@(Div (_blockId, _classes, namevals) _contents) =
     case lookup kInclude namevals of
         Just f -> do
             let shift = maybe 0 atoi $ lookup kShift namevals
-            (name, newContents) <- trackFile e f
+            (name, newContents) <- trackFile e (T.unpack f)
             Pandoc _ blocks <- do
                 doc <- parseDoc (Just name) newContents
                 let shifted = shiftTitles shift doc

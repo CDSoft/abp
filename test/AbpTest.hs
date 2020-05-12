@@ -18,13 +18,15 @@
     http://cdsoft.fr/abp
 -}
 
+{-# LANGUAGE OverloadedStrings #-}
+
 module AbpTest
 where
 
 import AbstractProcessor
 import Config
 
-import Data.Text
+import qualified Data.Text as T
 import System.Environment
 import System.Exit
 import Test.Hspec
@@ -38,27 +40,27 @@ writerOptions :: WriterOptions
 writerOptions = def { writerExtensions = pandocExtensions
                     }
 
-reader :: Text -> IO Pandoc
+reader :: T.Text -> IO Pandoc
 reader = runIOorExplode . readMarkdown readerOptions
 
-writer :: Pandoc -> IO Text
+writer :: Pandoc -> IO T.Text
 writer = runIOorExplode . writeMarkdown writerOptions
 
-(==>) :: HasCallStack => Text -> Text -> IO ()
+(==>) :: HasCallStack => T.Text -> T.Text -> IO ()
 (==>) = runTest Nothing
 
-(==>*) :: HasCallStack => Text -> Text -> IO ()
+(==>*) :: HasCallStack => T.Text -> T.Text -> IO ()
 (==>*) = runTest (Just (Format "html"))
 
-runTest :: HasCallStack => Maybe Format -> Text -> Text -> IO ()
+runTest :: HasCallStack => Maybe Format -> T.Text -> T.Text -> IO ()
 runTest format input expectedOutput = do
     output <- reader input >>= abp format >>= writer
     outputAst <- reader output
     expectedOutputAst <- reader expectedOutput
     outputAst `shouldBe` expectedOutputAst
 
-(!=>) :: HasCallStack => Text -> ExitCode -> IO ()
+(!=>) :: HasCallStack => T.Text -> ExitCode -> IO ()
 (!=>) input exitCode = do
     inputAst <- reader input
-    setEnv kAbpQuiet "1"
+    setEnv (T.unpack kAbpQuiet) "1"
     abp Nothing inputAst `shouldThrow` (==exitCode)

@@ -46,8 +46,8 @@ spec = describe "dependencies" $
         writeFile (T.unpack tmp</>"b.rst") $ T.unpack [text|
                                                         World!
                                                       |]
-        bracket (setEnv kAbpTarget (T.unpack tmp</>"index.html"))
-                (\_ -> unsetEnv kAbpTarget)
+        bracket (setEnv (T.unpack kAbpTarget) (T.unpack tmp</>"index.html"))
+                (\_ -> unsetEnv (T.unpack kAbpTarget))
                 (\_ -> [text|
                             :::{include=$tmp/a.md}
                             :::
