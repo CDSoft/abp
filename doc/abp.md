@@ -1,9 +1,9 @@
 % Abstract Processor (for Pandoc)
 % Christophe Delord - <https://cdsoft.fr/abp>
-% 13 Mai 2020
+% 15 Mai 2020
 
 ```{meta="{{ABP_ROOT}}package.yaml"}
-- archive: {{name}}-{{version}}.tar.gz
+archive: {{name}}-{{version}}.tar.gz
 ```
 
 [ABP]: https://cdsoft.fr/abp "ABP - Abstract Preprocessor (for Pandoc)"
@@ -128,12 +128,13 @@ Variable names are enclosed between double curly brackets.
 E.g. `{{title}}`{.raw} will be replaced with the document title.
 
 Elements with the `raw` class won't be expanded.
+E.g. `` `{{title}}`{.raw} ``{.raw} won't be replaced with the document title.
 
 E.g.:
 
 ~~~markdown
 ```meta
-- foo: bar (note: this is parsed as **Markdown**)
+foo: bar (note: this is parsed as **Markdown**)
 ```
 
 foo is {{foo}}.
