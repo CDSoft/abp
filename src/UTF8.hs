@@ -44,9 +44,9 @@ readFileUTF8 name = do
     -- the file must not be read lazily
     -- (in some case we want to be able to read files
     -- that have been previously produced by the same document)
-    content <- T.pack <$> SIO.hGetContents h
+    content <- SIO.hGetContents h
     hClose h
-    return content
+    return $ T.pack content
 
 -- "writeFileUTF8 name content" writes an UTF-8 file.
 writeFileUTF8 :: FilePath -> String -> IO ()
@@ -67,9 +67,10 @@ readProcessUTF8 :: String -> [String] -> IO (Either (String, ExitCode) T.Text)
 readProcessUTF8 cmd args = do
     (_, Just hOut, Just hErr, hProc) <- createProcess (shell (cmd ++ " " ++ unwords args)) { std_out = CreatePipe, std_err = CreatePipe }
     hSetEncoding hOut utf8
-    out <- T.pack <$> SIO.hGetContents hOut
+    hSetEncoding hErr utf8
+    out <- SIO.hGetContents hOut
     err <- SIO.hGetContents hErr
     exitCode <- waitForProcess hProc
     return $ case exitCode of
         ret@(ExitFailure _) -> Left (err, ret)
-        ExitSuccess -> Right out
+        ExitSuccess -> Right $ T.pack out
