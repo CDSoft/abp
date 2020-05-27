@@ -14,14 +14,14 @@
 # along with ABP.  If not, see <https://www.gnu.org/licenses/>.
 #
 # For further information about ABP you can visit
-# http://cdsoft.fr/abp
+# http://cdelord.fr/abp
 
 name:                abp
-version:             0.1.8.4
+version:             0.1.8.6
 github:              "CDSoft/abp"
 license:             GPL-3
 author:              "Christophe Delord"
-maintainer:          "cdsoft.fr"
+maintainer:          "cdelord.fr"
 copyright:           "2019-2020 Christophe Delord"
 
 extra-source-files:

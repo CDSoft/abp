@@ -1,14 +1,14 @@
 % Abstract Processor (for Pandoc)
-% Christophe Delord - <https://cdsoft.fr/abp>
+% Christophe Delord - <http://cdelord.fr/abp>
 % 15 Mai 2020
 
 ```{meta="{{ABP_ROOT}}package.yaml"}
 archive: {{name}}-{{version}}.tar.gz
 ```
 
-[ABP]: https://cdsoft.fr/abp "ABP - Abstract Preprocessor (for Pandoc)"
-[{{archive}}]: https://cdsoft.fr/abp/{{archive}}
-[PP]: https://cdsoft.fr/pp "PP - Generic Preprocessor (for Pandoc)"
+[ABP]: http://cdelord.fr/abp "ABP - Abstract Preprocessor (for Pandoc)"
+[{{archive}}]: http://cdelord.fr/abp/{{archive}}
+[PP]: http://cdelord.fr/pp "PP - Generic Preprocessor (for Pandoc)"
 [GraphViz]: http://graphviz.org/
 [PlantUML]: http://plantuml.sourceforge.net/
 [ditaa]: http://ditaa.sourceforge.net/
@@ -24,7 +24,7 @@ archive: {{name}}-{{version}}.tar.gz
 [Stack]: https://docs.haskellstack.org/en/stable/README/
 [GitHub]: https://github.com/CDSoft/abp
 [Pandoc csv2table filter]: http://hackage.haskell.org/package/pandoc-csv2table
-[CDSoft]: https://CDSoft.fr
+[cdelord.fr]: http://cdelord.fr
 
 ABP - Abstract preprocessor (for Pandoc)
 ========================================
@@ -394,11 +394,11 @@ Licenses
     along with ABP.  If not, see <https://www.gnu.org/licenses/>.
 
     For further information about ABP you can visit
-    http://cdsoft.fr/abp
+    http://cdelord.fr/abp
 
 ## PP
 
-Some portions of code are based on [PP] released under the [GPL license version 3](https://cdsoft.fr/pp/#pp).
+Some portions of code are based on [PP] released under the [GPL license version 3](http://cdelord.fr/pp/#pp).
 
 ## Pandoc csv2table filter
 
@@ -409,4 +409,4 @@ Feedback
 ========
 
 Your feedback and contributions are welcome.
-You can contact me at [CDSoft].
+You can contact me at [cdelord.fr].

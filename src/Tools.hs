@@ -15,7 +15,7 @@
     along with ABP.  If not, see <https://www.gnu.org/licenses/>.
 
     For further information about ABP you can visit
-    http://cdsoft.fr/abp
+    http://cdelord.fr/abp
 -}
 
 module Tools

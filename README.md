@@ -42,7 +42,7 @@ $ pandoc -F abp ...
 # Documentation
 
 The full documentation is in [doc/adp.md](doc/abp.md).
-The rendered version of the documentation is here: <https://CDSoft.fr/abp>.
+The rendered version of the documentation is here: <http://cdelord.fr/abp>.
 
 # License
 
@@ -62,4 +62,4 @@ The rendered version of the documentation is here: <https://CDSoft.fr/abp>.
     along with ABP.  If not, see <https://www.gnu.org/licenses/>.
 
     For further information about ABP you can visit
-    http://cdsoft.fr/abp
+    http://cdelord.fr/abp
