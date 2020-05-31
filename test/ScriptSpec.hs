@@ -31,7 +31,7 @@ import Test.Hspec
 spec :: Spec
 spec = describe "script execution" $ do
     it "executes inline code" $
-        "`echo -e $((1+1))`{.foo cmd=sh}" ==> "`2`{.foo}"
+        "`echo $((1+1))`{.foo cmd=sh}" ==> "`2`{.foo}"
     it "executes code blocks" $
         [text|
             ```{.bar cmd=sh}
