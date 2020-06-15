@@ -64,13 +64,15 @@ hWriteFileUTF8 handle content = do
 -- "readProcessUTF8 cmd arg" executes "cmd args"
 -- and returns the standard output produced by the command.
 readProcessUTF8 :: String -> [String] -> IO (Either (String, ExitCode) T.Text)
-readProcessUTF8 cmd args = do
-    (_, Just hOut, Just hErr, hProc) <- createProcess (shell (cmd ++ " " ++ unwords args)) { std_out = CreatePipe, std_err = CreatePipe }
-    hSetEncoding hOut utf8
-    hSetEncoding hErr utf8
-    out <- SIO.hGetContents hOut
-    err <- SIO.hGetContents hErr
-    exitCode <- waitForProcess hProc
-    return $ case exitCode of
-        ret@(ExitFailure _) -> Left (err, ret)
-        ExitSuccess -> Right $ T.pack out
+readProcessUTF8 cmd args =
+    withCreateProcess (shell (cmd ++ " " ++ unwords args)) { std_in = CreatePipe, std_out = CreatePipe, std_err = CreatePipe } $
+        \(Just hIn) (Just hOut) (Just hErr) hProc -> do
+            hClose hIn
+            hSetEncoding hOut utf8
+            hSetEncoding hErr utf8
+            out <- SIO.hGetContents hOut
+            err <- SIO.hGetContents hErr
+            exitCode <- waitForProcess hProc
+            return $ case exitCode of
+                ret@(ExitFailure _) -> Left (err, ret)
+                ExitSuccess -> Right $ T.pack out

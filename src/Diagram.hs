@@ -126,18 +126,20 @@ makeCmd :: String -> String -> String -> String
 makeCmd src img = replace (T.unpack kDiagArgIn) src . replace (T.unpack kDiagArgOut) img
 
 renderDiagram :: Env -> String -> T.Text -> IO ()
-renderDiagram e cmd contents = do
-    (_, Just hOut, Just hErr, hProc) <- createProcess (shell cmd) { std_out = CreatePipe, std_err = CreatePipe }
-    hSetEncoding hOut utf8
-    _out <- SIO.hGetContents hOut
-    err <- SIO.hGetContents hErr
-    exitCode <- waitForProcess hProc
-    case exitCode of
-        ExitFailure _ -> do
-            unless (quiet e) $ do
-                hPutStrLn stderr "Diagram failed:"
-                hPutStrLn stderr (T.unpack contents)
-                hPutStrLn stderr "Errors:"
-                hPutStrLn stderr err
-            exitWith exitCode
-        ExitSuccess -> return ()
+renderDiagram e cmd contents =
+    withCreateProcess (shell cmd) { std_in = CreatePipe, std_out = CreatePipe, std_err = CreatePipe } $
+        \(Just hIn) (Just hOut) (Just hErr) hProc -> do
+            hClose hIn
+            hSetEncoding hOut utf8
+            _out <- SIO.hGetContents hOut
+            err <- SIO.hGetContents hErr
+            exitCode <- waitForProcess hProc
+            case exitCode of
+                ExitFailure _ -> do
+                    unless (quiet e) $ do
+                        hPutStrLn stderr "Diagram failed:"
+                        hPutStrLn stderr (T.unpack contents)
+                        hPutStrLn stderr "Errors:"
+                        hPutStrLn stderr err
+                    exitWith exitCode
+                ExitSuccess -> return ()
