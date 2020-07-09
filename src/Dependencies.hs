@@ -27,6 +27,7 @@ where
 import Config
 import qualified Data.Text as T
 import Environment
+import Patterns
 import Tools
 import UTF8
 
@@ -46,8 +47,6 @@ trackFile e name = do
 writeDependencies :: EnvMVar -> IO ()
 writeDependencies e = do
     Env { vars = vs, deps = ds } <- readMVar e
-    case lookup kAbpTarget vs of
-        Just target -> do
-            target' <- T.unpack <$> inlineToPlainText target
-            writeFile (target'++".d") $ target'++": "++unwords (sort (nub ds))++"\n"
-        Nothing -> return ()
+    whenJust (lookup kAbpTarget vs) $ \target -> do
+        target' <- T.unpack <$> inlineToPlainText target
+        writeFile (target'++".d") $ target'++": "++unwords (sort (nub ds))++"\n"

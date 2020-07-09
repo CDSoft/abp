@@ -38,22 +38,24 @@ import Text.Pandoc.JSON
 
 scriptBlock :: Env -> Block -> IO [Block]
 scriptBlock e cb@(CodeBlock attr@(_blockId, _classes, namevals) contents) =
-    case lookup kCmd namevals of
-        Just cmd  -> do
+    runCodeBlock $ lookup kCmd namevals
+    where
+        runCodeBlock (Just cmd) = do
             output <- runScript e cmd contents
             let (blockId', classes', namevals') = cleanAttr [] [kCmd] attr
             return [CodeBlock (blockId', classes', namevals') output]
-        Nothing -> return [cb]
+        runCodeBlock Nothing = return [cb]
 scriptBlock _ x = return [x]
 
 scriptInline :: Env -> Inline -> IO [Inline]
 scriptInline e c@(Code attr@(_blockId, _classes, namevals) contents) =
-    case lookup kCmd namevals of
-        Just cmd  -> do
+    runCode $ lookup kCmd namevals
+    where
+        runCode (Just cmd) = do
             output <- T.strip <$> runScript e cmd contents
             let (blockId', classes', namevals') = cleanAttr [] [kCmd] attr
             return [Code (blockId', classes', namevals') output]
-        Nothing -> return [c]
+        runCode Nothing = return [c]
 scriptInline _ x = return [x]
 
 runScript :: Env -> T.Text -> T.Text -> IO T.Text
@@ -61,17 +63,16 @@ runScript e cmd contents =
     withSystemTempFile "abp" $ \path handle -> do
         hWriteFileUTF8 handle (T.unpack contents)
         hClose handle
-        --setFileMode path 0o550
-        res <- readProcessUTF8 (makeCmd (T.unpack cmd) path) []
-        case res of
-            Left (err, exitCode) -> do
-                unless (quiet e) $ do
-                    hPutStrLn stderr "Script failed:"
-                    hPutStrLn stderr (T.unpack contents)
-                    hPutStrLn stderr "Errors:"
-                    hPutStrLn stderr err
-                exitWith exitCode
-            Right out -> return out
+        readProcessUTF8 (makeCmd (T.unpack cmd) path) [] >>= getProcessOutput
+    where
+        getProcessOutput (Left (err, exitCode)) = do
+            unless (quiet e) $ do
+                hPutStrLn stderr "Script failed:"
+                hPutStrLn stderr (T.unpack contents)
+                hPutStrLn stderr "Errors:"
+                hPutStrLn stderr err
+            exitWith exitCode
+        getProcessOutput (Right out) = return out
 
 makeCmd :: String -> String -> String
 makeCmd cmd arg = replaceArg cmd False
@@ -84,4 +85,3 @@ makeCmd cmd arg = replaceArg cmd False
         replaceArg (c:cs) found = c : replaceArg cs found
         replaceArg [] False = ' ' : arg
         replaceArg [] True = []
-

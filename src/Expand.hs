@@ -44,7 +44,7 @@ import Network.URI.Encode
 import Text.Pandoc
 import Text.Pandoc.Walk
 
-{- Walk trhoug the whole document
+{- Walk through the whole document
 
     1. expand meta definitions
     2. expand blocks
@@ -81,19 +81,16 @@ expandMetaValue e = walkM (expandInline e)
 {- Block/Inline filter -}
 genericFilter :: EnvMVar -> Attr -> a -> IO a -> IO a
 genericFilter e attrs disabledItem enabledItem = do
-    disabled <- itemIsDisabled e attrs
-    if disabled
-        then return disabledItem
-        else enabledItem
+    enabled <- itemIsEnabled e attrs
+    if enabled
+        then enabledItem
+        else return disabledItem
 
 inlineFilter :: EnvMVar -> Attr -> IO Inline -> IO Inline
 inlineFilter e attrs = genericFilter e attrs (Str "")
 
 blockFilter :: EnvMVar -> Attr -> IO Block -> IO Block
 blockFilter e attrs = genericFilter e attrs Null
-
-itemIsDisabled :: EnvMVar -> Attr -> IO Bool
-itemIsDisabled e attrs = not <$> itemIsEnabled e attrs
 
 itemIsEnabled :: EnvMVar -> Attr -> IO Bool
 itemIsEnabled e (_, _, namevals) = do
@@ -126,21 +123,21 @@ isRaw (_, classes, _) = kRaw `elem` classes
 
 {- filter inlines -}
 expandInline :: EnvMVar -> Inline -> IO Inline
-expandInline e x@(Code attrs _) = rawFilter attrs x $ inlineFilter e attrs (expandInline' e x)
-expandInline e x@(Link attrs _ _) = rawFilter attrs x $ inlineFilter e attrs (expandInline' e x)
+expandInline e x@(Code attrs _)    = rawFilter attrs x $ inlineFilter e attrs (expandInline' e x)
+expandInline e x@(Link attrs _ _)  = rawFilter attrs x $ inlineFilter e attrs (expandInline' e x)
 expandInline e x@(Image attrs _ _) = rawFilter attrs x $ inlineFilter e attrs (expandInline' e x)
-expandInline e x@(Span attrs _) = rawFilter attrs x $ inlineFilter e attrs (expandInline' e x)
+expandInline e x@(Span attrs _)    = rawFilter attrs x $ inlineFilter e attrs (expandInline' e x)
 expandInline e x = expandInline' e x
 
 {- expand strings -}
 expandInline' :: EnvMVar -> Inline -> IO Inline
-expandInline' e (Str s) = expandString e s -- Str <$> expandString' e s
-expandInline' e (Code attrs s) = Code <$> expandAttr e attrs <*> expandString' e s
-expandInline' e (Math mathType s) = Math mathType <$> expandString' e s
-expandInline' e (RawInline fmt s) = RawInline fmt <$> expandString' e s
-expandInline' e (Link attrs x (url, title)) = Link <$> expandAttr e attrs <*> return x <*> ( (,) <$> expandURL e url <*> expandString' e title )
+expandInline' e (Str s)                      = expandString e s
+expandInline' e (Code attrs s)               = Code <$> expandAttr e attrs <*> expandString' e s
+expandInline' e (Math mathType s)            = Math mathType <$> expandString' e s
+expandInline' e (RawInline fmt s)            = RawInline fmt <$> expandString' e s
+expandInline' e (Link attrs x (url, title))  = Link <$> expandAttr e attrs <*> return x <*> ( (,) <$> expandURL e url <*> expandString' e title )
 expandInline' e (Image attrs x (url, title)) = Image <$> expandAttr e attrs <*> return x <*> ( (,) <$> expandURL e url <*> expandString' e title )
-expandInline' e (Span attrs x) = Span <$> expandAttr e attrs <*> return x
+expandInline' e (Span attrs x)               = Span <$> expandAttr e attrs <*> return x
 expandInline' _ x = return x
 
 expandURL :: EnvMVar -> T.Text -> IO T.Text
@@ -161,8 +158,8 @@ expandURL e url = T.pack . encodeWith allowed . T.unpack <$> expandString' e ((T
 {- filter blocks -}
 expandBlock :: EnvMVar -> (Pandoc -> IO Pandoc) -> Block -> IO Block
 expandBlock e abp x@(CodeBlock attrs _) = rawFilter attrs x $ blockFilter e attrs (expandBlock' e abp x)
-expandBlock e abp x@(Header _ attrs _) = rawFilter attrs x $ blockFilter e attrs (expandBlock' e abp x)
-expandBlock e abp x@(Div attrs _) = rawFilter attrs x $ blockFilter e attrs (expandBlock' e abp x)
+expandBlock e abp x@(Header _ attrs _)  = rawFilter attrs x $ blockFilter e attrs (expandBlock' e abp x)
+expandBlock e abp x@(Div attrs _)       = rawFilter attrs x $ blockFilter e attrs (expandBlock' e abp x)
 expandBlock e abp x = expandBlock' e abp x
 
 expandBlock' :: EnvMVar -> (Pandoc -> IO Pandoc) -> Block -> IO Block
@@ -198,10 +195,10 @@ expandBlock' e abp cb@(CodeBlock (_blockId, classes, namevals) contents) =
 expandBlock' e _ x = expandBlock'' e x
 
 expandBlock'' :: EnvMVar -> Block -> IO Block
-expandBlock'' e (CodeBlock attrs s) = CodeBlock <$> expandAttr e attrs <*> expandString' e s
-expandBlock'' e (RawBlock fmt s) = RawBlock fmt <$> expandString' e s
+expandBlock'' e (CodeBlock attrs s)    = CodeBlock <$> expandAttr e attrs <*> expandString' e s
+expandBlock'' e (RawBlock fmt s)       = RawBlock fmt <$> expandString' e s
 expandBlock'' e (Header level attrs x) = Header level <$> expandAttr e attrs <*> return x
-expandBlock'' e (Div attrs x) = Div <$> expandAttr e attrs <*> return x
+expandBlock'' e (Div attrs x)          = Div <$> expandAttr e attrs <*> return x
 expandBlock'' _ x = return x
 
 expandAttr :: EnvMVar -> Attr -> IO Attr
@@ -244,10 +241,10 @@ expandString' :: EnvMVar -> T.Text -> IO T.Text
 expandString' e s = inlineToPlainText =<< expandString e s
 
 metaValueToInline :: MetaValue -> Maybe Inline
-metaValueToInline (MetaList xs) = Just $ Span nullAttr $ intersperse (Span nullAttr [Str ",", Space]) $ mapMaybe metaValueToInline xs
-metaValueToInline (MetaBool True) = Just $ Str "true"
+metaValueToInline (MetaList xs)    = Just $ Span nullAttr $ intersperse (Span nullAttr [Str ",", Space]) $ mapMaybe metaValueToInline xs
+metaValueToInline (MetaBool True)  = Just $ Str "true"
 metaValueToInline (MetaBool False) = Just $ Str "false"
-metaValueToInline (MetaString s) = Just $ Str s
+metaValueToInline (MetaString s)   = Just $ Str s
 metaValueToInline (MetaInlines xs) = Just $ Span nullAttr xs
 metaValueToInline _ = Nothing
 
@@ -257,12 +254,12 @@ stringToInline abp s = do
     return $ blockToInline blocks
 
 blockToInline :: [Block] -> Maybe Inline
-blockToInline [] = Just $ Span nullAttr []
-blockToInline [Plain [x]] = Just x
-blockToInline [Plain xs] = Just $ Span nullAttr xs
-blockToInline [Para [x]] = Just x
-blockToInline [Para xs] = Just $ Span nullAttr xs
+blockToInline []                = Just $ Span nullAttr []
+blockToInline [Plain [x]]       = Just x
+blockToInline [Plain xs]        = Just $ Span nullAttr xs
+blockToInline [Para [x]]        = Just x
+blockToInline [Para xs]         = Just $ Span nullAttr xs
 blockToInline [LineBlock [[x]]] = Just x
-blockToInline [LineBlock [xs]] = Just $ Span nullAttr xs
-blockToInline [Div _ blocks] = blockToInline blocks
+blockToInline [LineBlock [xs]]  = Just $ Span nullAttr xs
+blockToInline [Div _ blocks]    = blockToInline blocks
 blockToInline _ = Nothing

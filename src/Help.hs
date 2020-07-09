@@ -57,38 +57,38 @@ upstream :: String
 upstream = "http://cdelord.fr/" ++ name
 
 copyright :: String
-copyright = unlines [
-        version,
-        description,
-        "",
-        "Copyright (C) " ++ $(abpCopyright),
-        "This is free software; see the source for copying conditions.  There is NO",
-        "warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.",
-        "Released under the " ++ license ++ " license.",
-        "",
-        "See " ++ upstream ++ " for further information."
+copyright = unlines
+    [ version
+    , description
+    , ""
+    , "Copyright (C) " ++ $(abpCopyright)
+    , "This is free software; see the source for copying conditions.  There is NO"
+    , "warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE."
+    , "Released under the " ++ license ++ " license."
+    , ""
+    , "See " ++ upstream ++ " for further information."
     ]
 
 help :: String
-help = unlines [
-        "abp is a pandoc filter",
-        "",
-        "Usage: pandoc --filter=abp",
-        "",
-        "abp can be configured with environment variables:",
-        "  "++ljust 12 (T.unpack kAbpQuiet)++" disable stderr on script execution",
-        "  "++ljust 12 (T.unpack kAbpTarget)++" target name for dependency file generation",
-        "  "++ljust 12 (T.unpack kAbpPlantuml)++" plantuml.jar full path",
-        "  "++ljust 12 (T.unpack kAbpDitaa)++" ditaa.jar full path",
-        "",
-        "abp can be called on the command line to get additional information:",
-        "Usage: " ++ name ++ " option",
-        "Options:",
-        "  -v           Display the current version",
-        "  -h           Display this help message",
-        "  emojis       Show available Pandoc emojis",
-        "",
-        "More information here: " ++ upstream
+help = unlines
+    [ "abp is a pandoc filter"
+    , ""
+    , "Usage: pandoc --filter=abp"
+    , ""
+    , "abp can be configured with environment variables:"
+    , "  "++ljust 12 (T.unpack kAbpQuiet)++" disable stderr on script execution"
+    , "  "++ljust 12 (T.unpack kAbpTarget)++" target name for dependency file generation"
+    , "  "++ljust 12 (T.unpack kAbpPlantuml)++" plantuml.jar full path"
+    , "  "++ljust 12 (T.unpack kAbpDitaa)++" ditaa.jar full path"
+    , ""
+    , "abp can be called on the command line to get additional information:"
+    , "Usage: " ++ name ++ " option"
+    , "Options:"
+    , "  -v           Display the current version"
+    , "  -h           Display this help message"
+    , "  emojis       Show available Pandoc emojis"
+    , ""
+    , "More information here: " ++ upstream
     ]
 
 emojis :: Block

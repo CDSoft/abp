@@ -29,6 +29,7 @@ where
 import Config
 import Environment
 import Expand
+import Patterns
 import Tools
 import UTF8
 
@@ -68,15 +69,20 @@ storeCustomPath e envVarName defaultBaseName = do
     setVar e envVarName (Str value)
 
 diagramBlock :: Env -> Block -> IO [Block]
-diagramBlock e cb@(CodeBlock attr@(_blockId, _classes, namevals) contents) = do
-    let maybeRender = lookup kRender namevals
+diagramBlock e cb@(CodeBlock attr@(_blockId, _classes, namevals) contents) =
+    renderBlock maybeRender
+    where
+        maybeRender = lookup kRender namevals
         maybeImg = lookup kImg namevals
         maybeOutputPath = lookup kOut namevals
         maybeTarget = lookup kTarget namevals
         hashDigest = sha1 contents
-    case maybeRender of
-        Nothing -> return [cb]
-        Just render -> do
+
+        renderBlock :: Maybe T.Text -> IO [Block]
+        renderBlock Nothing = return [cb]
+        renderBlock (Just render) = do
+
+            {- Output identification -}
             let ext = (T.pack . getExt . T.unpack) render
             let img = fromMaybe (error $ T.unpack kImg ++ " field missing in a diagram block") maybeImg
             out <- expandPath $ case maybeOutputPath of
@@ -88,6 +94,8 @@ diagramBlock e cb@(CodeBlock attr@(_blockId, _classes, namevals) contents) = do
                                         , T.concat ["img: ", img]
                                         , T.concat ["out: ", T.pack out]
                                         ]
+
+            {- Image generation -}
             imgExists <- doesFileExist out
             metaExists <- doesFileExist meta
             oldMeta <- if metaExists then readFileUTF8 meta else return ""
@@ -98,6 +106,8 @@ diagramBlock e cb@(CodeBlock attr@(_blockId, _classes, namevals) contents) = do
                     writeFileUTF8 meta (T.unpack metaContent)
                     let render' = makeCmd path out (T.unpack render)
                     renderDiagram e render' contents
+
+            {- Document generation -}
             let title = fromMaybe "" (lookup kTitle namevals)
             let attrs' = cleanAttr [] [kRender, kImg, kOut, kTarget, kTitle] attr
             let image = Image attrs' [ Str title ] (T.concat [img, ext], title)
@@ -123,7 +133,9 @@ getExt (_:s) = getExt s
 getExt [] = ""
 
 makeCmd :: String -> String -> String -> String
-makeCmd src img = replace (T.unpack kDiagArgIn) src . replace (T.unpack kDiagArgOut) img
+makeCmd src img = replace' [ (T.unpack kDiagArgIn, src)
+                           , (T.unpack kDiagArgOut, img)
+                           ]
 
 renderDiagram :: Env -> String -> T.Text -> IO ()
 renderDiagram e cmd contents =

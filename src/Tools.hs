@@ -63,10 +63,16 @@ parseDoc maybeName = runIOorExplode . reader options
         options = def
             { readerExtensions = pandocExtensions
             }
-        reader = case maybeName of
-            Just name | ".md" `isSuffixOf` name -> readMarkdown
-            Just name |  ".rst" `isSuffixOf` name -> readRST
-            Just name |  ".latex" `isSuffixOf` name -> readLaTeX
-            Just name |  ".html" `isSuffixOf` name -> readHtml
-            Just name -> error $ "Unknown file format: " ++ name
-            Nothing -> readMarkdown
+        reader = findReader maybeName
+        defaultReader = readMarkdown
+        knownReaders = [ (".md", readMarkdown)
+                       , (".rst", readRST)
+                       , (".latex", readLaTeX)
+                       , (".html", readHtml)
+                       ]
+        findReader (Just name) = head ( [ r
+                                        | (e, r) <- knownReaders
+                                        , e `isSuffixOf` name
+                                        ] ++ [defaultReader]
+                                      )
+        findReader Nothing = defaultReader

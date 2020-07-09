@@ -34,8 +34,9 @@ import Text.Pandoc
 includeBlock :: EnvMVar -> (Pandoc -> IO Pandoc) -> Block -> IO [Block]
 
 includeBlock e _abp cb@(CodeBlock attr@(_blockId, _classes, namevals) _contents) =
-    case lookup kInclude namevals of
-        Just f  -> do
+    includeCodeBlock $ lookup kInclude namevals
+    where
+        includeCodeBlock (Just f) = do
             (_, newContents) <- trackFile e (T.unpack f)
             let newContents' = case (atoi <$> lookup kFromLine namevals, atoi <$> lookup kToLine namevals) of
                     (Nothing, Nothing)      -> newContents
@@ -44,11 +45,12 @@ includeBlock e _abp cb@(CodeBlock attr@(_blockId, _classes, namevals) _contents)
                     (Just from, Just to)    -> T.unlines $ drop (from-1) . take to $ T.lines newContents
             let attr' = cleanAttr [] [kInclude, kFromLine, kToLine] attr
             return [CodeBlock attr' newContents']
-        Nothing -> return [cb]
+        includeCodeBlock Nothing = return [cb]
 
 includeBlock e abp d@(Div (_blockId, _classes, namevals) _contents) =
-    case lookup kInclude namevals of
-        Just f -> do
+    includeDiv $ lookup kInclude namevals
+    where
+        includeDiv (Just f) = do
             let shift = maybe 0 atoi $ lookup kShift namevals
             (name, newContents) <- trackFile e (T.unpack f)
             Pandoc _ blocks <- do
@@ -56,7 +58,7 @@ includeBlock e abp d@(Div (_blockId, _classes, namevals) _contents) =
                 let shifted = shiftTitles shift doc
                 abp shifted
             return blocks
-        Nothing -> return [d]
+        includeDiv Nothing = return [d]
 
 includeBlock _ _ x = return [x]
 

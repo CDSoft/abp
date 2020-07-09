@@ -28,35 +28,35 @@ module Package
 where
 
 import Language.Haskell.TH
-import System.Exit
 
 abpName :: ExpQ
-abpName = stringE =<< getParam "name"
+abpName = getParam "name"
 
 abpVersion :: ExpQ
-abpVersion = stringE =<< getParam "version"
+abpVersion = getParam "version"
 
 abpLicense :: ExpQ
-abpLicense = stringE =<< getParam "license"
+abpLicense = getParam "license"
 
 abpCopyright :: ExpQ
-abpCopyright = stringE =<< getParam "copyright"
+abpCopyright = getParam "copyright"
 
 abpDescription :: ExpQ
-abpDescription = stringE =<< getParam "description"
+abpDescription = getParam "description"
 
-getParam :: String -> Q String
-getParam name = runIO $ getYamlParam name
+getParam :: String -> ExpQ
+getParam name = stringE =<< runIO (getYamlParam name)
 
 getYamlParam :: String -> IO String
-getYamlParam name = do
-    maybeValue <- getValue
-    case maybeValue of
-        Just value -> return value
-        Nothing -> die $ "Unknown parameter '"++name++"` in package.yaml"
+getYamlParam name = checkValue <$> getValue
     where
+        getValue :: IO (Maybe String)
+        getValue = lookup name . map parse . lines <$> readFile "package.yaml"
+
+        checkValue (Just value) = value
+        checkValue Nothing = error $ "Unknown parameter '"++name++"` in package.yaml"
+
         parse s = (param, value)
             where
                 (param, rest) = break (==':') s
-                value = (reverse . dropWhile (=='"') . reverse . dropWhile (`elem` [':', '"', ' '])) rest
-        getValue = lookup name . map parse . lines <$> readFile "package.yaml"
+                value = (reverse . dropWhile (=='"') . reverse . dropWhile (`elem` [':', '"', ' ', '\t'])) rest
