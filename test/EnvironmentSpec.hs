@@ -33,10 +33,10 @@ spec :: Spec
 spec = describe "environment" $ do
     it "reads environment variables" $ do
         home <- T.pack <$> getEnv "HOME"
-        [text|{{HOME}}|] ==> home
-        [text|{{unknown_var}}|] ==> [text|{{unknown_var}}|]
+        [text|`{{HOME}}`|] ==> [text|`$home`|]
+        [text|`{{unknown_var}}`|] ==> [text|`{{unknown_var}}`|]
     it "reads the abp binary path" $ do
         path <- T.pack <$> getExecutablePath
-        [text|{{ABP_PATH}}|] ==>[text|$path|]
+        [text|`{{ABP_PATH}}`|] ==>[text|`$path`|]
     it "defines the output format" $
         [text|{{format}}|] ==>* "html"
