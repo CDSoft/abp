@@ -46,11 +46,13 @@ reader = runIOorExplode . readMarkdown readerOptions
 writer :: Pandoc -> IO T.Text
 writer = runIOorExplode . writeMarkdown writerOptions
 
+-- run tests with the default output format
 (==>) :: HasCallStack => T.Text -> T.Text -> IO ()
 (==>) = runTest Nothing
 
-(==>*) :: HasCallStack => T.Text -> T.Text -> IO ()
-(==>*) = runTest (Just (Format "html"))
+-- run tests with the HTML output
+(*==>) :: HasCallStack => T.Text -> T.Text -> IO ()
+(*==>) = runTest (Just (Format "html"))
 
 runTest :: HasCallStack => Maybe Format -> T.Text -> T.Text -> IO ()
 runTest format input expectedOutput = do
@@ -59,8 +61,9 @@ runTest format input expectedOutput = do
     expectedOutputAst <- reader expectedOutput
     outputAst `shouldBe` expectedOutputAst
 
-(!=>) :: HasCallStack => T.Text -> ExitCode -> IO ()
-(!=>) input exitCode = do
+-- run tests and expect an exception
+(==>!) :: HasCallStack => T.Text -> ExitCode -> IO ()
+(==>!) input exitCode = do
     inputAst <- reader input
     setEnv (T.unpack kAbpQuiet) "1"
     abp Nothing inputAst `shouldThrow` (==exitCode)

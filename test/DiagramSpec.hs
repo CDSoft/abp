@@ -72,7 +72,7 @@ spec = describe "diagrams" $ do
             ```{.dot title="image title" render="dot -o %o %i" img="$tmp/abp_dot_test_5.png"}
             This is an error!
             ```
-        |] !=> ExitFailure 1
+        |] ==>! ExitFailure 1
     it "takes a default PlantUML JAR in the same directory than abp" $ do
         path <- T.pack . (</> "plantuml.jar") . takeDirectory <$> getExecutablePath
         "`{{plantuml}}`" ==> [text|`java -jar $path -pipe -charset UTF-8 -tsvg < %i > %o.svg`|]

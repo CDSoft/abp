@@ -48,7 +48,7 @@ spec = describe "script execution" $ do
             echo Unexpected error >&2
             exit 42
             ```
-        |] !=> ExitFailure 42
+        |] ==>! ExitFailure 42
     it "accepts a flexible command line" $
         [text|
             ```{.haskell cmd="pandoc % -t native"}

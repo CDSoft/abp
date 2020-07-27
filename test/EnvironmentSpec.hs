@@ -39,4 +39,4 @@ spec = describe "environment" $ do
         path <- T.pack <$> getExecutablePath
         [text|`{{ABP_PATH}}`|] ==>[text|`$path`|]
     it "defines the output format" $
-        [text|{{format}}|] ==>* "html"
+        [text|{{format}}|] *==> "html"
