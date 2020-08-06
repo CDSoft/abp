@@ -25,6 +25,7 @@ archive: {{name}}-{{version}}.tar.gz
 [GitHub]: https://github.com/CDSoft/abp
 [Pandoc csv2table filter]: http://hackage.haskell.org/package/pandoc-csv2table
 [cdelord.fr]: http://cdelord.fr
+[gnuplot]: http://www.gnuplot.info/
 
 ABP - Abstract preprocessor (for Pandoc)
 ========================================
@@ -282,6 +283,9 @@ Diagram             Predefined variable                     Render command
 [ditaa]             `{{ditaa}}`{.raw}                       `{{ditaa}}`
                     `{{ditaa.svg}}`{.raw}                   `{{ditaa.svg}}`
                     `{{ditaa.png}}`{.raw}                   `{{ditaa.png}}`
+[gnuplot]           `{{gnuplot}}`{.raw}                     `{{gnuplot}}`
+                    `{{gnuplot.svg}}`{.raw}                 `{{gnuplot.svg}}`
+                    `{{gnuplot.png}}`{.raw}                 `{{gnuplot.png}}`
 
 Notes:
 
@@ -315,6 +319,14 @@ E.g.:
 |     { rank=same; pandoc, abp }                                                                |     { rank=same; pandoc, abp }                                                                    |
 |     { rank=same; diagrams, output }                                                           |     { rank=same; diagrams, output }                                                               |
 | }                                                                                             | }                                                                                                 |
+| ```                                                                                           | ```                                                                                               |
+| ~~~                                                                                           |                                                                                                   |
++-----------------------------------------------------------------------------------------------+---------------------------------------------------------------------------------------------------+
+| ~~~ {.markdown .raw}                                                                          |                                                                                                   |
+| ```{render="{{gnuplot}}" img="img/abp_gnuplot_example" out="{{doc}}/img" height=128}          | ```{render="{{gnuplot}}" img="img/abp_gnuplot_example" out="{{doc}}/img" height=128}              |
+| set xrange [-pi:pi]                                                                           | set xrange [-2*pi:2*pi]                                                                           |
+| set yrange [-1.5:1.5]                                                                         | set yrange [-1.5:1.5]                                                                             |
+| plot sin(x) lw 4, cos(x) lw 4                                                                 | plot sin(x) lw 4, cos(x) lw 4                                                                     |
 | ```                                                                                           | ```                                                                                               |
 | ~~~                                                                                           |                                                                                                   |
 +-----------------------------------------------------------------------------------------------+---------------------------------------------------------------------------------------------------+

@@ -63,6 +63,12 @@ kDiagramRenderers fmt = map (bimap T.pack T.pack) $ concatMap mkEngine engines
                   ++
                   [ ("ditaa", "svg png", \_exe ext -> unwords $ "java -jar {{DITAA}}" : [ "--svg" | ext == "svg" ] ++ ["-o", "-e UTF-8", "%i", "%o"])
                   ]
+                  ++
+                  [ ("gnuplot", "svg png pdf", \exe ext -> unwords [exe, "-e 'set terminal "++term ext++"'", "-e 'set output \"%o\"'", "-c %i"])
+                  | let term "png" = "png"
+                        term "pdf" = "pdf"
+                        term ext = ext
+                  ]
         mkEngine (exe, exts, cmd) =
             let exts'@(defaultHTML:defaultLaTeX:_) = words exts
                 defaultExt = case fmt of

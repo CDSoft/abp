@@ -18,4 +18,4 @@ abp.html: abp.md hello.dot $(CSS)
 	pandoc -F abp --to=html5 --standalone --self-contained --css=$(CSS) $< -o $@
 
 cdelord.css:
-	curl -O http://cdelord.fr/cdelord.css
+	wget http://cdelord.fr/cdelord.css -O cdelord.css
