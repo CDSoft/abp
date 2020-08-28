@@ -31,6 +31,7 @@ import Environment
 import Expand
 import Include
 import Script
+import SDoc
 import UTF8
 
 import Data.Data
@@ -50,6 +51,7 @@ abp maybeFormat document = do
             inject doc'
                 >>= pf commentBlock
                 >>= pf (includeBlock e abpFilter)
+                >>= pf (sDoc e abpFilter)
                 >>= pf (scriptInline e')
                 >>= pf (scriptBlock e')
                 >>= pf (diagramBlock e')

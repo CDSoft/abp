@@ -1,6 +1,6 @@
 % Abstract Processor (for Pandoc)
 % Christophe Delord - <http://cdelord.fr/abp>
-% 15 Mai 2020
+% 17 October 2020
 
 ```{meta="{{ABP_ROOT}}package.yaml"}
 archive: {{name}}-{{version}}.tar.gz
@@ -40,6 +40,7 @@ It provides several interesting features:
 - script execution (e.g. to include the result of a command)
 - diagrams ([Graphviz], [PlantUML], [ditaa], [Asymptote], [blockdiag], [mermaid]...)
 - CSV tables
+- basic documentation extraction from source files
 
 Open source
 ===========
@@ -99,6 +100,7 @@ code block                                  `render="command"`      replaces the
 code block                                  `img="image path"`      URL of the image produced by `render`
 code block                                  `out="image path"`      path of the image produced by `render` (optional, the default value is `img`)
 CSV tables                  `table`                                 see [Pandoc csv2table filter]
+div block                                   `sdoc=file`             extract Markdown comments from `file`, the source code being kept in code blocks
 
 Commented blocks
 ================
@@ -370,6 +372,51 @@ The table content can be defined in the code block or in an external file.
 | ```                                                                                           | ```                                                                                               |
 | ~~~                                                                                           |                                                                                                   |
 +-----------------------------------------------------------------------------------------------+---------------------------------------------------------------------------------------------------+
+
+Documentation extraction from source files
+==========================================
+
+ABP can include source files (currently C, C++, Haskell and Asymptote)
+and render Markdown comments.
+The code is kept in code blocks.
+
+The Markdown comment are delimited by specific delimiters
+
++---------------+---------------------------+
+| Language      | Markdown comments         |
++===============+===========================+
+| C, C++        | ~~~ { .c }                |
+|               | /*:                       |
+|               | Markdown comment          |
+|               | :*/                       |
+|               | ~~~                       |
++---------------+---------------------------+
+| Haskell       | ~~~ { .haskell }          |
+|               | {-:                       |
+|               | Markdown comment          |
+|               | :-}                       |
+|               | ~~~                       |
++---------------+---------------------------+
+
+Example:
+
++-----------------------------------------------------------------------------------------------------------+-----------------------------------------------------------------------------------------------------------+
+| Source                                                                                                    | Result                                                                                                    |
++===========================================================================================================+===========================================================================================================+
+| ~~~ {.markdown .raw}                                                                                      |                                                                                                           |
+| The file `hello.c` contains:                                                                              | The file `hello.c` contains:                                                                              |
+|                                                                                                           |                                                                                                           |
+| ```{.c include="{{doc}}/hello.c"}                                                                         | ```{.c include="{{doc}}/hello.c" }                                                                        |
+| ```                                                                                                       | ```                                                                                                       |
+| ~~~                                                                                                       |                                                                                                           |
++-----------------------------------------------------------------------------------------------------------+-----------------------------------------------------------------------------------------------------------+
+| ~~~ {.markdown .raw}                                                                                      |                                                                                                           |
+| and is rendered as:                                                                                       | and is rendered as:                                                                                       |
+|                                                                                                           |                                                                                                           |
+| :::{sdoc="{{doc}}/hello.c"}                                                                               | :::{sdoc="{{doc}}/hello.c"}                                                                               |
+| :::                                                                                                       | :::                                                                                                       |
+| ~~~                                                                                                       |                                                                                                           |
++-----------------------------------------------------------------------------------------------------------+-----------------------------------------------------------------------------------------------------------+
 
 Makefile dependencies
 =====================

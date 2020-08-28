@@ -13,7 +13,7 @@ export DITAA = {{DITAA}}
 
 CSS = cdelord.css
 
-abp.html: abp.md hello.dot $(CSS)
+abp.html: abp.md hello.dot hello.c $(CSS)
 	mkdir -p $(doc)img
 	pandoc -F abp --to=html5 --standalone --self-contained --css=$(CSS) $< -o $@
 

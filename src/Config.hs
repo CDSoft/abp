@@ -94,6 +94,16 @@ kFromLine = "fromline"
 kToLine = "toline"
 kShift = "shift"
 
+kSDoc :: T.Text
+kSDoc = "sdoc"
+
+kSDocSyntax :: [(String, (T.Text, (T.Text, T.Text)))]
+kSDocSyntax =    [ (ext, ("c", ("/*:", ":*/"))) | ext <- words "c h" ]
+              ++ [ (ext, ("cpp", ("/*:", ":*/"))) | ext <- words "cpp hpp" ]
+              ++ [ ("asy", ("c", ("/*:", ":*/")))
+                 , ("hs", ("haskell", ("{-:", ":-}")))  -- literate Haskell may be a better choice
+                 ]
+
 kCmd :: T.Text
 kCmd = "cmd"
 
