@@ -45,7 +45,7 @@ sDoc e abp cb@(Div _attr@(_blockId, _classes, namevals) _contents) =
             let shift = maybe 0 atoi $ lookup kShift namevals
             (name, content) <- trackFile e (T.unpack filename)
             let (lang, delimiters) = getCommentDelimiters name
-            let meta = nullMeta -- TODO: ajouter le titre (nom du source)
+            let meta = nullMeta
             blocks <- splitBlocks lang delimiters 1 content
             let doc = shiftTitles shift $ Pandoc meta blocks
             Pandoc _ blocks' <- abp doc
@@ -93,9 +93,7 @@ extractTo delimiter line content = (line', block, content'')
     where
         (block, content') = T.breakOn delimiter content
         content'' = T.drop (T.length delimiter) content'
-        line' = T.foldl (\n c -> n + nl c) line block
-        nl '\n' = 1
-        nl _ = 0
+        line' = line + T.count "\n" block
 
 shiftTitles :: Int -> Pandoc -> Pandoc
 shiftTitles shift = bottomUp shiftTitle
