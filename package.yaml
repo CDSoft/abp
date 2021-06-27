@@ -17,7 +17,7 @@
 # http://cdelord.fr/abp
 
 name:                abp
-version:             0.1.9.0
+version:             0.1.9.1
 github:              "CDSoft/abp"
 license:             GPL-3
 author:              "Christophe Delord"
