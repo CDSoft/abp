@@ -41,6 +41,16 @@ It provides several interesting features:
 - diagrams ([Graphviz], [PlantUML], [ditaa], [Asymptote], [blockdiag], [mermaid]...)
 - CSV tables
 
+# Warning: ABP may not be supported in the future
+
+Their is no plan to support ABP from now on. ABP is meant to be replaced
+by a combination of:
+
+  - [UPP](http://cdelord.fr/upp): Lua-scriptable Universal PreProcessor
+  - [Panda](http://cdelord.fr/panda): Pandoc add-ons (Lua filters for Pandoc)
+
+Upp and Panda are written in Lua and are way easier to deploy.
+
 Open source
 ===========
 
