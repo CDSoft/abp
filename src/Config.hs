@@ -70,7 +70,10 @@ kDiagramRenderers fmt = map (bimap T.pack T.pack) $ concatMap mkEngine engines
                         term ext = ext
                   ]
         mkEngine (exe, exts, cmd) =
-            let exts'@(defaultHTML:defaultLaTeX:_) = words exts
+            let exts' = words exts
+                (defaultHTML, defaultLaTeX) = case exts' of
+                    x:y:_ -> (x, y)
+                    _ -> error "Unexpected error: missing default for HTML or LaTeX"
                 defaultExt = case fmt of
                     Just (Format "html") -> defaultHTML
                     Just (Format "latex") -> defaultLaTeX

@@ -56,7 +56,7 @@ spec = describe "script execution" $ do
             ```
         |] ==> [text|
                     ```{.haskell}
-                    [Para [Strong [Str "cool"]]]
+                    [ Para [ Strong [ Str "cool" ] ] ]
                     ```
                |]
     it "allows '%' on the command line" $

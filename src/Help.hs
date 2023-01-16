@@ -94,12 +94,27 @@ help = unlines
 emojis :: Block
 emojis = table
     where
-        table = Table [] [AlignLeft, AlignLeft] [0.0, 0.0] header body
-        header = [[Plain [Str "Code"]], [Plain [Str "Emoji"]]]
-        body = [ [[Plain [Code ("",[],[]) (T.concat [":", code, ":"])]], [Plain [Str value]]]
+        table = Table attr caption colspec header [body] foot
+        attr = nullAttr
+        caption = Caption Nothing []
+        colspec = [(AlignLeft, ColWidthDefault), (AlignLeft, ColWidthDefault)]
+        header = TableHead nullAttr
+                    [ row
+                        [ cell [Plain [Str "Code"]]
+                        , cell [Plain [Str "Emoji"]]
+                        ]
+                    ]
+        body = TableBody nullAttr (RowHeadColumns 2) []
+               [ row
+                    [ cell [Plain [Code ("",[],[]) (T.concat [":", code, ":"])]]
+                    , cell [Plain [Str value]]
+                    ]
                | (code, value) <- emojiList
                ]
         emojiList = sort $ M.toList E.emojis
+        foot = TableFoot nullAttr []
+        cell = Cell nullAttr AlignLeft (RowSpan 1) (ColSpan 1)
+        row = Row nullAttr
 
 emojisMarkdown :: IO T.Text
 emojisMarkdown = do

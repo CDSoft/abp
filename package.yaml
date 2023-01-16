@@ -17,12 +17,12 @@
 # http://cdelord.fr/abp
 
 name:                abp
-version:             0.1.9.1
+version:             0.1.9.2
 github:              "CDSoft/abp"
 license:             GPL-3
 author:              "Christophe Delord"
 maintainer:          "cdelord.fr"
-copyright:           "2019-2020 Christophe Delord"
+copyright:           "2019-2023 Christophe Delord"
 
 extra-source-files:
 - README.md
