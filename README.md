@@ -1,5 +1,10 @@
 # Abstract Processor (for Pandoc)
 
+> [!WARNING]
+> This repository is no longer maintained and has been archived.
+>
+> Please consider using [panda](https://github.com/CDSoft/panda) instead.
+
 ABP is a [Pandoc filter](https://pandoc.org/filters.html) that works on internal Pandoc's AST.
 
 It provides several interesting features:
